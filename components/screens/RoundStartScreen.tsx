@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Layers, ShieldAlert, ArrowRight } from 'lucide-react';
+import { Layers, ArrowRight } from 'lucide-react';
 import { Game } from '@/types/game';
 import { getCategoryById } from '@/data/categories';
 import { sounds } from '@/lib/audio/soundEffects';
@@ -34,57 +34,42 @@ export const RoundStartScreen: React.FC<RoundStartScreenProps> = ({ game, onProc
   }, [onProceed]);
 
   return (
-    <div className="w-full max-w-xl mx-auto text-center space-y-8 my-auto animate-in zoom-in-95 duration-300">
+    <div className="w-full max-w-sm mx-auto text-center space-y-6 my-auto animate-in zoom-in-95 duration-200">
       {/* Category Pill */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-bold text-zinc-300"
-      >
-        <Layers size={14} className="text-purple-400" />
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-xs text-xs font-bold text-slate-700">
+        <Layers size={13} className="text-slate-500" />
         <span>Category: {category.name}</span>
-      </motion.div>
+      </div>
 
       {/* Main Announcement Box */}
-      <div className="glass-panel p-8 sm:p-12 rounded-3xl relative overflow-hidden border border-white/15 shadow-2xl">
-        <div className="absolute -top-20 -left-20 w-48 h-48 bg-purple-600/25 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-rose-600/25 rounded-full blur-3xl" />
+      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400 block mb-1">
+          Get Ready
+        </span>
 
-        <motion.div
-          key={countdown}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 1.2, opacity: 0 }}
-          className="relative z-10"
+        <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tight mb-2">
+          Round {game.currentRoundNum}
+        </h2>
+
+        <p className="text-xs text-slate-500 max-w-xs mx-auto mb-6 font-medium">
+          Secret cards are being distributed. Keep your screen hidden from others!
+        </p>
+
+        {/* Big Countdown Number */}
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-900 flex items-center justify-center font-black text-3xl text-white shadow-sm mb-6 animate-pulse">
+          {countdown > 0 ? countdown : 'GO!'}
+        </div>
+
+        <button
+          onClick={() => {
+            sounds.click();
+            onProceed();
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
         >
-          <span className="text-xs uppercase font-extrabold tracking-[0.3em] text-zinc-400 block mb-2">
-            Get Ready
-          </span>
-
-          <h2 className="text-5xl sm:text-6xl font-black text-white uppercase tracking-tight mb-4">
-            Round {game.currentRoundNum}
-          </h2>
-
-          <p className="text-sm text-zinc-300 max-w-xs mx-auto mb-8 font-medium">
-            Secret roles and cards are being distributed. Keep your screen hidden!
-          </p>
-
-          {/* Big Countdown Number */}
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-rose-600 to-purple-600 flex items-center justify-center font-black text-4xl text-white shadow-xl shadow-purple-950/50 mb-6 border-2 border-white/30 animate-pulse">
-            {countdown > 0 ? countdown : 'GO!'}
-          </div>
-
-          <button
-            onClick={() => {
-              sounds.click();
-              onProceed();
-            }}
-            className="inline-flex items-center gap-2 text-xs font-bold text-purple-300 hover:text-white transition-colors cursor-pointer"
-          >
-            <span>Skip Countdown</span>
-            <ArrowRight size={14} />
-          </button>
-        </motion.div>
+          <span>Skip Countdown</span>
+          <ArrowRight size={13} />
+        </button>
       </div>
     </div>
   );

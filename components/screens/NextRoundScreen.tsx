@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { RotateCcw, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Game } from '@/types/game';
 import { sounds } from '@/lib/audio/soundEffects';
 
@@ -32,39 +31,34 @@ export const NextRoundScreen: React.FC<NextRoundScreenProps> = ({ game, onProcee
   }, [onProceed]);
 
   return (
-    <div className="w-full max-w-lg mx-auto text-center space-y-6 my-auto animate-in zoom-in-95 duration-300">
-      <div className="glass-panel p-8 sm:p-12 rounded-3xl relative overflow-hidden border border-white/15 shadow-2xl">
-        <div className="absolute -top-20 -left-20 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-cyan-600/20 rounded-full blur-3xl" />
+    <div className="w-full max-w-sm mx-auto text-center space-y-4 my-auto animate-in zoom-in-95 duration-200">
+      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xs">
+        <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400 block mb-1">
+          Next Round
+        </span>
 
-        <div className="relative z-10">
-          <span className="text-xs uppercase font-black tracking-[0.25em] text-cyan-400 block mb-2">
-            Next Round Starting
-          </span>
+        <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight mb-2">
+          Round {game.currentRoundNum} of {game.config.totalRounds}
+        </h2>
 
-          <h2 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tight mb-2">
-            Round {game.currentRoundNum} of {game.config.totalRounds}
-          </h2>
+        <p className="text-xs text-slate-500 max-w-xs mx-auto mb-6 font-medium">
+          New secret roles and a new secret word are being selected.
+        </p>
 
-          <p className="text-xs sm:text-sm text-zinc-300 max-w-xs mx-auto mb-8 font-medium">
-            New imposters and a new secret word are being randomized.
-          </p>
-
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center font-black text-4xl text-white shadow-xl shadow-cyan-950/50 mb-6 border-2 border-white/30 animate-pulse">
-            {countdown}
-          </div>
-
-          <button
-            onClick={() => {
-              sounds.click();
-              onProceed();
-            }}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-          >
-            <span>Start Now</span>
-            <ArrowRight size={14} />
-          </button>
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-900 flex items-center justify-center font-black text-3xl text-white shadow-xs mb-6 animate-pulse">
+          {countdown}
         </div>
+
+        <button
+          onClick={() => {
+            sounds.click();
+            onProceed();
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+        >
+          <span>Start Now</span>
+          <ArrowRight size={13} />
+        </button>
       </div>
     </div>
   );

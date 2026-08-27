@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Vote, CheckCircle2, Lock, Users, ShieldAlert } from 'lucide-react';
+import { Vote, CheckCircle2, Lock, Users } from 'lucide-react';
 import { Player, Game } from '@/types/game';
 import { PlayerAvatar } from '@/components/common/PlayerAvatar';
 import { sounds } from '@/lib/audio/soundEffects';
@@ -60,55 +60,52 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
   const progressPercent = Math.min(100, Math.round((totalVotedCount / players.length) * 100));
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6 my-auto animate-in zoom-in-95 duration-300">
+    <div className="w-full max-w-3xl mx-auto space-y-5 my-auto animate-in zoom-in-95 duration-200">
       {/* Title */}
       <div className="text-center space-y-1">
-        <span className="text-xs uppercase font-extrabold tracking-widest text-rose-400">
+        <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400">
           Secret Ballot • Round {game.currentRoundNum}
         </span>
-        <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">
           Who is the Imposter?
         </h2>
-        <p className="text-xs sm:text-sm text-zinc-300">
+        <p className="text-xs sm:text-sm text-slate-500">
           {isSubmitted
             ? 'Your vote is locked. Waiting for other players to finish voting...'
-            : 'Select the player you believe is hiding the truth and vote.'}
+            : 'Select the player you suspect and confirm your secret vote.'}
         </p>
       </div>
 
       {error && (
-        <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold text-center">
+        <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold text-center">
           {error}
         </div>
       )}
 
       {/* Players Selection Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
         {players.map((player) => {
           const isSelf = currentPlayer?.id === player.id;
           const isSelected = selectedTargetId === player.id;
 
           return (
-            <motion.div
+            <div
               key={player.id}
-              whileHover={!isSubmitted && !isSelf ? { scale: 1.02 } : {}}
-              whileTap={!isSubmitted && !isSelf ? { scale: 0.98 } : {}}
               onClick={() => handleSelect(player.id)}
-              className={`relative p-5 rounded-3xl flex flex-col items-center text-center transition-all ${
+              className={`relative p-4 sm:p-5 rounded-3xl flex flex-col items-center text-center transition-all ${
                 isSelf
-                  ? 'opacity-40 bg-white/5 border border-white/5 cursor-not-allowed'
+                  ? 'opacity-40 bg-slate-100 border border-slate-200 cursor-not-allowed'
                   : isSubmitted
                   ? isSelected
-                    ? 'bg-rose-950/60 border-2 border-rose-500 shadow-xl shadow-rose-950/50 glow-box-rose'
-                    : 'glass-panel border-white/5 opacity-50 cursor-default'
+                    ? 'bg-slate-900 text-white border-2 border-slate-900 shadow-sm'
+                    : 'bg-white border border-slate-200 opacity-50 cursor-default'
                   : isSelected
-                  ? 'bg-rose-950/70 border-2 border-rose-500 shadow-xl shadow-rose-950/50 glow-box-rose cursor-pointer'
-                  : 'glass-panel-interactive border-white/10 cursor-pointer'
+                  ? 'bg-blue-50 border-2 border-blue-600 shadow-xs cursor-pointer'
+                  : 'bg-white hover:bg-slate-50 border border-slate-200 shadow-xs cursor-pointer active:scale-98'
               }`}
             >
-              {/* Selected check badge */}
               {isSelected && (
-                <div className="absolute top-3 right-3 p-1 rounded-full bg-rose-500 text-white shadow-md">
+                <div className={`absolute top-3 right-3 p-0.5 rounded-full ${isSubmitted ? 'bg-white text-slate-900' : 'bg-blue-600 text-white'}`}>
                   <CheckCircle2 size={16} />
                 </div>
               )}
@@ -119,41 +116,41 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                 size="lg"
                 isHost={player.isHost}
                 connected={player.connected}
-                className="mb-3"
+                className="mb-2.5"
               />
 
-              <span className="font-extrabold text-base text-white truncate max-w-full">
+              <span className={`font-bold text-sm sm:text-base truncate max-w-full ${isSelected && isSubmitted ? 'text-white' : 'text-slate-900'}`}>
                 {player.name}
               </span>
 
-              <span className="text-[11px] font-semibold text-zinc-400 mt-0.5">
+              <span className={`text-[11px] font-semibold mt-0.5 ${isSelected && isSubmitted ? 'text-slate-300' : 'text-slate-500'}`}>
                 {isSelf ? '(You - Cannot vote)' : `${player.totalScore} pts`}
               </span>
-            </motion.div>
+            </div>
           );
         })}
       </div>
 
       {/* Progress & Submit Box */}
-      <div className="glass-panel p-5 sm:p-6 rounded-3xl space-y-4 border border-white/10">
+      <div className="bg-white p-5 sm:p-6 rounded-3xl space-y-3.5 border border-slate-200 shadow-xs max-w-xl mx-auto">
         {/* Progress Bar */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-zinc-400 flex items-center gap-1.5">
-              <Users size={14} className="text-cyan-400" />
+            <span className="text-slate-600 flex items-center gap-1.5">
+              <Users size={14} className="text-slate-500" />
               <span>Players Voted</span>
             </span>
-            <span className="text-cyan-300 font-mono">
+            <span className="text-slate-900 font-mono">
               {totalVotedCount} / {players.length} Submitted
             </span>
           </div>
 
-          <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden p-0.5 border border-white/10">
+          <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
             <motion.div
-              className="h-full bg-gradient-to-r from-rose-500 via-purple-500 to-cyan-400 rounded-full"
+              className="h-full bg-slate-900 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
             />
           </div>
         </div>
@@ -163,36 +160,36 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
           <button
             onClick={handleSubmit}
             disabled={!selectedTargetId || submitting}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 disabled:opacity-40 text-white font-black text-lg shadow-xl shadow-rose-950/60 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
             {submitting ? (
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Locking Vote...</span>
               </div>
             ) : (
               <>
-                <Vote size={20} />
-                <span>Submit Secret Vote</span>
+                <Vote size={18} />
+                <span>Confirm Secret Vote</span>
               </>
             )}
           </button>
         ) : (
-          <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-center font-bold text-sm flex items-center justify-center gap-2">
-            <Lock size={16} />
-            <span>Vote Locked & Encrypted • Awaiting remaining players...</span>
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-center font-bold text-xs flex items-center justify-center gap-2">
+            <Lock size={15} className="text-emerald-600" />
+            <span>Vote Locked • Waiting for remaining players...</span>
           </div>
         )}
 
-        {/* Host Force Conclude fallback if player disconnected */}
+        {/* Host Force Conclude fallback */}
         {isHost && isSubmitted && onForceConclude && (
-          <div className="pt-2 text-center">
+          <div className="pt-1 text-center">
             <button
               onClick={() => {
                 sounds.click();
                 onForceConclude();
               }}
-              className="text-xs font-semibold text-zinc-400 hover:text-rose-400 transition-colors underline cursor-pointer"
+              className="text-xs font-semibold text-slate-400 hover:text-slate-700 underline cursor-pointer"
             >
               Host Override: Conclude Voting Early
             </button>

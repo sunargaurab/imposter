@@ -1,21 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Users,
-  Play,
-  RotateCcw,
-  Sparkles,
-  Zap,
-  ShieldAlert,
-  Vote,
-  ArrowRight,
-  Eye,
-  CheckCircle2,
-  Trophy
-} from 'lucide-react';
-import { GameLogo } from '@/components/common/GameLogo';
+import { RotateCcw, Zap } from 'lucide-react';
 import { HeaderNav } from '@/components/common/HeaderNav';
 import { LobbyScreen } from './LobbyScreen';
 import { RoundStartScreen } from './RoundStartScreen';
@@ -26,7 +12,7 @@ import { VoteResultsScreen } from './VoteResultsScreen';
 import { ScoringScreen } from './ScoringScreen';
 import { NextRoundScreen } from './NextRoundScreen';
 import { FinalResultsScreen } from './FinalResultsScreen';
-import { PublicGameState, Player, PlayerSecretView } from '@/types/game';
+import { PublicGameState, PlayerSecretView } from '@/types/game';
 import { sounds } from '@/lib/audio/soundEffects';
 
 export const DemoPlaygroundScreen: React.FC = () => {
@@ -35,7 +21,6 @@ export const DemoPlaygroundScreen: React.FC = () => {
   const [playerSecret, setPlayerSecret] = useState<PlayerSecretView | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch state for DEMO1
   const fetchGameState = useCallback(async () => {
     try {
       const res = await fetch('/api/game/DEMO1/state');
@@ -58,7 +43,6 @@ export const DemoPlaygroundScreen: React.FC = () => {
 
   const activePlayer = gameState?.players[activePlayerIndex];
 
-  // Fetch secret for active player
   const fetchSecret = useCallback(async () => {
     if (!activePlayer || !gameState) return;
     try {
@@ -81,7 +65,6 @@ export const DemoPlaygroundScreen: React.FC = () => {
     fetchSecret();
   }, [fetchSecret, gameState?.game.status, gameState?.game.currentRoundNum]);
 
-  // Game action dispatcher helper
   const handleAction = async (action: string, extraBody: Record<string, unknown> = {}) => {
     if (!activePlayer) return;
     sounds.click();
@@ -107,24 +90,16 @@ export const DemoPlaygroundScreen: React.FC = () => {
     }
   };
 
-  // 1-Click Fast Scenario Simulation
   const handleSimulatePromptScenario = async () => {
     if (!gameState) return;
     sounds.voteSubmitted();
 
-    // Start game if in lobby
     if (gameState.game.status === 'LOBBY') {
       await handleAction('START_GAME');
     }
 
-    // Advance to voting
     await handleAction('ADVANCE_PHASE', { targetPhase: 'VOTING' });
 
-    // Submit votes according to Prompt Section 59:
-    // Jordan -> 3 votes (from Alex, Sam, Taylor)
-    // Chris -> 0 votes
-    // Maya -> 2 votes (from Jordan, Chris)
-    // Alex -> 1 vote (from Maya)
     const alex = gameState.players.find(p => p.name === 'Alex');
     const sam = gameState.players.find(p => p.name === 'Sam');
     const jordan = gameState.players.find(p => p.name === 'Jordan');
@@ -170,9 +145,9 @@ export const DemoPlaygroundScreen: React.FC = () => {
 
   if (loading || !gameState) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-10 h-10 border-3 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4" />
-        <span className="text-zinc-400 font-bold text-sm">Loading Simulator Sandbox...</span>
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-3" />
+        <span className="text-slate-500 font-bold text-xs">Loading Sandbox...</span>
       </div>
     );
   }
@@ -181,14 +156,14 @@ export const DemoPlaygroundScreen: React.FC = () => {
   const isHost = activePlayer?.isHost ?? false;
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-between">
+    <div className="flex-1 flex flex-col justify-between w-full">
       {/* SIMULATOR TOOLBAR */}
-      <div className="sticky top-0 z-50 bg-[#06080d]/95 backdrop-blur-xl border-b border-purple-500/20 px-3 py-2">
+      <div className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-2.5">
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
           {/* Active Perspective Switcher */}
-          <div className="flex items-center gap-1 overflow-x-auto py-1">
-            <span className="text-[10px] uppercase font-black tracking-wider text-purple-400 mr-1 hidden sm:inline">
-              PERSPECTIVE:
+          <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+            <span className="text-[10px] uppercase font-bold text-slate-400 mr-1 hidden sm:inline">
+              VIEW AS:
             </span>
             {players.map((p, idx) => {
               const isSelected = activePlayerIndex === idx;
@@ -199,10 +174,10 @@ export const DemoPlaygroundScreen: React.FC = () => {
                     sounds.click();
                     setActivePlayerIndex(idx);
                   }}
-                  className={`px-3 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                     isSelected
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-950/50 scale-105 border border-white/20'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-400'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                   }`}
                 >
                   <span>{p.name}</span>
@@ -216,17 +191,17 @@ export const DemoPlaygroundScreen: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleSimulatePromptScenario}
-              title="Auto-cast Section 59 votes (Jordan: 3, Chris: 0, Maya: 2, Alex: 1)"
-              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-black font-extrabold text-xs shadow-md hover:brightness-110 transition-all cursor-pointer"
+              title="Auto-cast Section 59 votes"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
             >
-              <Zap size={13} className="fill-black" />
-              <span className="hidden sm:inline">Auto-Vote Round 1</span>
+              <Zap size={13} className="fill-white" />
+              <span>Auto-Vote</span>
             </button>
 
             <button
               onClick={() => handleAction('RESTART_GAME')}
               title="Reset game to Lobby"
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
             >
               <RotateCcw size={12} />
               <span>Reset</span>
@@ -238,7 +213,7 @@ export const DemoPlaygroundScreen: React.FC = () => {
       {/* Main In-Game View */}
       <HeaderNav game={game} currentPlayer={activePlayer} totalPlayers={players.length} />
 
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-center">
         {game.status === 'LOBBY' && (
           <LobbyScreen
             game={game}
@@ -321,8 +296,8 @@ export const DemoPlaygroundScreen: React.FC = () => {
         )}
       </main>
 
-      <footer className="text-center text-xs text-zinc-500 py-3">
-        <span>Demo Sandbox • Simulating {activePlayer?.name} • Room DEMO1</span>
+      <footer className="text-center text-xs text-slate-400 py-3">
+        <span>Sandbox • Simulating {activePlayer?.name} • Room DEMO1</span>
       </footer>
     </div>
   );

@@ -23,8 +23,8 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ roomCode, isOpen, onCl
         width: 320,
         margin: 2,
         color: {
-          dark: '#080a10',
-          light: '#ffffff'
+          dark: '#0F172A',
+          light: '#FFFFFF'
         }
       }).then(url => {
         setQrUrl(url);
@@ -42,46 +42,46 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ roomCode, isOpen, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-sm glass-panel bg-[#101524]/95 p-6 rounded-3xl border border-white/15 shadow-2xl flex flex-col items-center text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="relative w-full max-w-sm bg-white p-6 rounded-3xl border border-slate-200 shadow-xl flex flex-col items-center text-center">
         <button
           onClick={onClose}
           aria-label="Close QR Code"
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all cursor-pointer"
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all cursor-pointer"
         >
           <X size={18} />
         </button>
 
-        <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 mb-3">
-          <QrCode size={28} />
+        <div className="p-2.5 rounded-2xl bg-blue-50 text-blue-600 mb-2">
+          <QrCode size={24} />
         </div>
 
-        <h3 className="text-xl font-bold text-white mb-1">Scan to Join Room</h3>
-        <p className="text-xs text-zinc-400 mb-5">Point any phone camera to join instantly</p>
+        <h3 className="text-lg font-bold text-slate-900 mb-0.5">Scan to Join</h3>
+        <p className="text-xs text-slate-500 mb-4">Point phone camera to join instantly</p>
 
         {/* QR Image Box */}
-        <div className="p-4 bg-white rounded-2xl shadow-inner mb-5">
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl mb-4">
           {qrUrl ? (
-            <img src={qrUrl} alt={`QR code to join room ${roomCode}`} className="w-56 h-56 rounded-lg" />
+            <img src={qrUrl} alt={`QR code to join room ${roomCode}`} className="w-52 h-52 rounded-xl" />
           ) : (
-            <div className="w-56 h-56 flex items-center justify-center text-zinc-800 text-sm animate-pulse">
+            <div className="w-52 h-52 flex items-center justify-center text-slate-400 text-xs animate-pulse">
               Generating QR...
             </div>
           )}
         </div>
 
-        <div className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-4">
+        <div className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
           <div className="text-left">
-            <span className="text-[10px] uppercase font-bold text-zinc-400 block">Room Code</span>
-            <span className="text-lg font-black tracking-wider text-cyan-400 font-mono">{roomCode}</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">Room Code</span>
+            <span className="text-base font-black tracking-wider text-slate-900 font-mono">{roomCode}</span>
           </div>
 
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all active:scale-95 cursor-pointer shadow-xs"
           >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-            <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+            {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+            <span>{copied ? 'Copied' : 'Copy Link'}</span>
           </button>
         </div>
       </div>

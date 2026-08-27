@@ -28,17 +28,17 @@ export const SoundController: React.FC = () => {
     <button
       onClick={toggleSound}
       aria-label={muted ? 'Unmute game audio' : 'Mute game audio'}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-panel hover:bg-white/10 transition-all text-xs font-semibold text-zinc-300 hover:text-white cursor-pointer active:scale-95"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-all text-xs font-semibold text-slate-700 cursor-pointer active:scale-95"
     >
       {muted ? (
         <>
-          <VolumeX size={15} className="text-zinc-400" />
-          <span className="hidden sm:inline text-zinc-400">Muted</span>
+          <VolumeX size={14} className="text-slate-400" />
+          <span className="text-slate-500 text-[11px]">Muted</span>
         </>
       ) : (
         <>
-          <Volume2 size={15} className="text-cyan-400 animate-pulse" />
-          <span className="hidden sm:inline text-cyan-300">Sound ON</span>
+          <Volume2 size={14} className="text-blue-600" />
+          <span className="text-slate-700 text-[11px]">Sound</span>
         </>
       )}
     </button>

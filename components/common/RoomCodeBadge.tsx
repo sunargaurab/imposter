@@ -48,23 +48,23 @@ export const RoomCodeBadge: React.FC<RoomCodeBadgeProps> = ({
 
   return (
     <>
-      <div className={`inline-flex items-center gap-1.5 p-1.5 rounded-2xl glass-panel bg-white/5 border border-white/10 ${className}`}>
+      <div className={`inline-flex items-center gap-1 p-1 rounded-2xl bg-white border border-slate-200 shadow-xs ${className}`}>
         {/* Room Code Clickable Tag */}
         <div
           onClick={handleCopy}
           role="button"
           tabIndex={0}
           title="Click to copy room code"
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/40 hover:bg-black/60 transition-all cursor-pointer group select-all"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200/80 transition-all cursor-pointer group select-all"
         >
-          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">ROOM</span>
-          <span className="text-sm font-black font-mono tracking-widest text-cyan-400 group-hover:text-cyan-300">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">ROOM</span>
+          <span className="text-xs font-black font-mono tracking-widest text-slate-900">
             {roomCode}
           </span>
           {copied ? (
-            <Check size={14} className="text-emerald-400 animate-in zoom-in" />
+            <Check size={12} className="text-emerald-600 animate-in zoom-in" />
           ) : (
-            <Copy size={13} className="text-zinc-500 group-hover:text-zinc-300" />
+            <Copy size={12} className="text-slate-400 group-hover:text-slate-700" />
           )}
         </div>
 
@@ -73,9 +73,9 @@ export const RoomCodeBadge: React.FC<RoomCodeBadgeProps> = ({
           onClick={handleShare}
           aria-label="Share room link"
           title="Share room link"
-          className="p-2 rounded-xl hover:bg-white/10 text-zinc-400 hover:text-white transition-all cursor-pointer active:scale-95"
+          className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-all cursor-pointer active:scale-95"
         >
-          <Share2 size={15} />
+          <Share2 size={13} />
         </button>
 
         {/* QR Button */}
@@ -87,9 +87,9 @@ export const RoomCodeBadge: React.FC<RoomCodeBadgeProps> = ({
             }}
             aria-label="Show QR Code"
             title="Scan QR Code to join"
-            className="p-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 hover:text-cyan-300 transition-all cursor-pointer active:scale-95"
+            className="p-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all cursor-pointer active:scale-95"
           >
-            <QrCode size={15} />
+            <QrCode size={13} />
           </button>
         )}
       </div>

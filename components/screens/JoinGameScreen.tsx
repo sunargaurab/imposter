@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, LogIn, Sparkles, ChevronRight } from 'lucide-react';
+import { ArrowLeft, LogIn, ChevronRight } from 'lucide-react';
 import { GameLogo } from '@/components/common/GameLogo';
 import { sounds } from '@/lib/audio/soundEffects';
 
@@ -63,15 +63,15 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
   };
 
   return (
-    <div className="relative min-h-screen p-4 sm:p-6 md:p-8 z-10 max-w-lg mx-auto flex flex-col justify-between">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 z-10">
+      {/* Top App Bar */}
+      <div className="flex items-center justify-between pb-6">
         <button
           onClick={() => {
             sounds.click();
             router.push('/');
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-panel hover:bg-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all cursor-pointer"
         >
           <ArrowLeft size={14} />
           <span>Back</span>
@@ -80,28 +80,28 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
         <GameLogo size="sm" />
       </div>
 
-      <form onSubmit={handleJoin} className="space-y-6 my-auto">
+      <form onSubmit={handleJoin} className="space-y-5 my-auto max-w-sm w-full mx-auto pb-8">
         <div className="text-center">
-          <div className="inline-flex p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 mb-3">
-            <LogIn size={28} />
+          <div className="inline-flex p-3 rounded-2xl bg-blue-50 text-blue-600 mb-2">
+            <LogIn size={24} />
           </div>
-          <h1 className="text-3xl font-black text-white uppercase tracking-tight">
-            Join Game Room
+          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+            Join Room
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">Enter your room code & player name</p>
+          <p className="text-xs text-slate-500 mt-0.5">Enter code & choose your nickname</p>
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm text-center font-medium animate-in fade-in">
+          <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs text-center font-bold animate-in fade-in">
             {error}
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-4">
           {/* Room Code */}
-          <div className="glass-panel p-5 rounded-3xl space-y-2">
-            <label className="block text-xs uppercase font-extrabold text-zinc-400 tracking-wider">
-              Room Code (5 Characters)
+          <div className="space-y-1.5">
+            <label className="block text-[11px] uppercase font-bold text-slate-500 tracking-wider">
+              Room Code (5 Letters)
             </label>
             <input
               type="text"
@@ -110,13 +110,13 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
               placeholder="e.g. AB7KQ"
               value={roomCode}
               onChange={e => setRoomCode(e.target.value.toUpperCase())}
-              className="w-full text-center tracking-[0.25em] px-4 py-3 rounded-2xl bg-black/40 border border-white/15 focus:border-cyan-400 text-cyan-400 font-mono font-black text-2xl uppercase focus:outline-none transition-all placeholder-zinc-700"
+              className="w-full text-center tracking-[0.2em] px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-slate-800 text-slate-900 font-mono font-black text-2xl uppercase focus:outline-none transition-all placeholder-slate-300"
             />
           </div>
 
           {/* Player Name */}
-          <div className="glass-panel p-5 rounded-3xl space-y-2">
-            <label className="block text-xs uppercase font-extrabold text-zinc-400 tracking-wider">
+          <div className="space-y-1.5 pt-2 border-t border-slate-100">
+            <label className="block text-[11px] uppercase font-bold text-slate-500 tracking-wider">
               Your Player Name
             </label>
             <input
@@ -126,7 +126,7 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
               placeholder="e.g. Sam"
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-2xl bg-black/40 border border-white/15 focus:border-cyan-400 text-white font-bold text-lg focus:outline-none transition-all placeholder-zinc-600"
+              className="w-full px-3.5 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-slate-800 text-slate-900 font-bold text-base focus:outline-none transition-all placeholder-slate-400"
             />
           </div>
         </div>
@@ -134,17 +134,17 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 disabled:opacity-50 text-black font-black text-lg shadow-xl shadow-cyan-950/50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
         >
           {loading ? (
-            <div className="flex items-center gap-2 text-white">
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Joining Room...</span>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Joining...</span>
             </div>
           ) : (
             <>
-              <span className="text-white">Enter Game</span>
-              <ChevronRight size={20} className="text-white" />
+              <span>Enter Game</span>
+              <ChevronRight size={18} />
             </>
           )}
         </button>

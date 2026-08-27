@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeaderNav } from '@/components/common/HeaderNav';
 import { LobbyScreen } from '@/components/screens/LobbyScreen';
@@ -30,9 +30,7 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
-  // Restore player session credentials from localStorage / cookies
   useEffect(() => {
-    const storedPlayerId = localStorage.getItem('imposter_player_id');
     const storedToken = localStorage.getItem('imposter_session_token');
     const storedRoom = localStorage.getItem('imposter_room_code');
 
@@ -41,7 +39,6 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     }
   }, [roomCode]);
 
-  // Fetch public game state
   const fetchGameState = useCallback(async () => {
     try {
       const res = await fetch(`/api/game/${roomCode}/state`);
@@ -49,7 +46,6 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
         const data: PublicGameState = await res.json();
         setGameState(data);
 
-        // Match current player
         const storedPlayerId = localStorage.getItem('imposter_player_id');
         if (storedPlayerId) {
           const match = data.players.find(p => p.id === storedPlayerId);
@@ -67,11 +63,9 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     }
   }, [roomCode]);
 
-  // Set up live real-time connection (SSE stream)
   useEffect(() => {
     fetchGameState();
 
-    // Connect to SSE stream
     const eventSource = new EventSource(`/api/game/${roomCode}/events`);
 
     eventSource.onmessage = (event) => {
@@ -91,11 +85,6 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
       }
     };
 
-    eventSource.onerror = () => {
-      // Automatic fallback polling if SSE disconnects
-    };
-
-    // Heartbeat pulse every 5s
     const heartbeat = setInterval(() => {
       const storedPlayerId = localStorage.getItem('imposter_player_id');
       const token = localStorage.getItem('imposter_session_token');
@@ -114,7 +103,6 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     };
   }, [roomCode, fetchGameState]);
 
-  // Fetch secret card if in round
   const fetchSecret = useCallback(async () => {
     const storedPlayerId = localStorage.getItem('imposter_player_id');
     const token = localStorage.getItem('imposter_session_token');
@@ -143,7 +131,6 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     fetchSecret();
   }, [fetchSecret, gameState?.game.status, gameState?.game.currentRoundNum]);
 
-  // Dispatch Action Helper
   const handleAction = async (action: string, extraBody: Record<string, unknown> = {}) => {
     const token = localStorage.getItem('imposter_session_token') || sessionToken;
     const storedPlayerId = localStorage.getItem('imposter_player_id') || currentPlayer?.id;
@@ -183,23 +170,23 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 border-3 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4" />
-        <span className="text-zinc-400 font-bold text-sm">Connecting to Room {roomCode}...</span>
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-3" />
+        <span className="text-slate-500 font-bold text-xs">Connecting to Room {roomCode}...</span>
       </div>
     );
   }
 
   if (error || !gameState) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center max-w-md mx-auto space-y-4">
-        <div className="p-4 rounded-3xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
-          <h2 className="text-xl font-black mb-1">Game Not Found</h2>
-          <p className="text-xs text-rose-200/80">{error || 'This room does not exist or has closed.'}</p>
+      <div className="flex-1 flex flex-col items-center justify-center p-4 text-center max-w-sm mx-auto space-y-3">
+        <div className="p-4 rounded-3xl bg-red-50 border border-red-200 text-red-800 w-full">
+          <h2 className="text-base font-bold mb-0.5">Room Unavailable</h2>
+          <p className="text-xs text-red-600">{error || 'This room does not exist or has ended.'}</p>
         </div>
         <button
           onClick={() => router.push('/')}
-          className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm transition-all cursor-pointer"
+          className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all cursor-pointer shadow-xs"
         >
           Return to Home
         </button>
@@ -211,10 +198,10 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
   const isHost = currentPlayer?.isHost ?? false;
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-between">
+    <div className="flex-1 flex flex-col justify-between w-full">
       <HeaderNav game={game} currentPlayer={currentPlayer} totalPlayers={players.length} />
 
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-center">
         {game.status === 'LOBBY' && (
           <LobbyScreen
             game={game}
@@ -302,8 +289,8 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
         )}
       </main>
 
-      <footer className="text-center text-xs text-zinc-500 py-3">
-        <span>Imposter • Room {game.roomCode} • {players.length} Players Connected</span>
+      <footer className="text-center text-xs text-slate-400 py-3">
+        <span>Room {game.roomCode} • {players.length} Players Connected</span>
       </footer>
     </div>
   );

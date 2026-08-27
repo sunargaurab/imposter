@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Skull, CheckCircle2, ShieldAlert, Sparkles, ArrowRight, BarChart3 } from 'lucide-react';
+import { ArrowRight, BarChart3 } from 'lucide-react';
 import { RoundResultSummary } from '@/types/game';
 import { PlayerAvatar } from '@/components/common/PlayerAvatar';
 import { sounds } from '@/lib/audio/soundEffects';
@@ -19,23 +19,22 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
   const [revealStep, setRevealStep] = useState(0);
 
   useEffect(() => {
-    // Dramatic step-by-step reveal timeline
     sounds.imposterReveal();
 
     const t1 = setTimeout(() => {
-      setRevealStep(1); // Reveal Imposters
+      setRevealStep(1); // Imposters
       sounds.cardReveal();
-    }, 1200);
+    }, 1000);
 
     const t2 = setTimeout(() => {
-      setRevealStep(2); // Reveal Secret Word
+      setRevealStep(2); // Secret Word
       sounds.scoreDing();
-    }, 2800);
+    }, 2200);
 
     const t3 = setTimeout(() => {
-      setRevealStep(3); // Reveal Vote Distribution
+      setRevealStep(3); // Votes
       sounds.tick();
-    }, 4200);
+    }, 3400);
 
     return () => {
       clearTimeout(t1);
@@ -47,40 +46,39 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
   const maxVotes = Math.max(1, ...roundResult.voteDistribution.map(v => v.voteCount));
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6 my-auto animate-in zoom-in-95 duration-300">
+    <div className="w-full max-w-3xl mx-auto space-y-5 my-auto animate-in zoom-in-95 duration-200 pb-6">
       {/* Title */}
       <div className="text-center space-y-1">
-        <span className="text-xs uppercase font-extrabold tracking-widest text-zinc-400">
+        <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400">
           Round {roundResult.roundNumber} Reveal
         </span>
-        <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">
           The Truth Revealed
         </h2>
       </div>
 
       {/* 1. Imposter Identities Reveal Card */}
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-rose-500/30 bg-gradient-to-b from-rose-950/40 via-[#140b12] to-[#090a10] shadow-2xl relative overflow-hidden">
-        <div className="text-center mb-6">
-          <span className="text-xs uppercase font-black tracking-[0.25em] text-rose-400 block mb-1">
-            Suspense
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs">
+        <div className="text-center mb-4">
+          <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">
+            Identity Reveal
           </span>
-          <h3 className="text-2xl sm:text-3xl font-black text-white uppercase">
-            The Imposter{roundResult.imposters.length > 1 ? 's Were' : ' Was'}...
+          <h3 className="text-xl font-black text-slate-900 uppercase">
+            The Imposter{roundResult.imposters.length > 1 ? 's Were' : ' Was'}
           </h3>
         </div>
 
         {revealStep >= 1 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {roundResult.imposters.map((imp) => (
               <motion.div
                 key={imp.id}
-                initial={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className={`p-5 rounded-2xl border-2 flex items-center gap-4 ${
+                className={`p-4 rounded-2xl border flex items-center gap-3.5 ${
                   imp.caught
-                    ? 'bg-rose-950/70 border-rose-500 shadow-xl shadow-rose-950/60'
-                    : 'bg-emerald-950/60 border-emerald-500 shadow-xl shadow-emerald-950/60'
+                    ? 'bg-red-50/80 border-red-200'
+                    : 'bg-emerald-50/80 border-emerald-200'
                 }`}
               >
                 <PlayerAvatar
@@ -91,30 +89,30 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
                   statusType={imp.caught ? 'caught' : 'escaped'}
                 />
 
-                <div className="flex flex-col text-left">
+                <div className="flex flex-col text-left min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-black text-white">{imp.name}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-extrabold text-[10px] uppercase tracking-wider">
-                      IMPOSTER
+                    <span className="text-base font-bold text-slate-900 truncate">{imp.name}</span>
+                    <span className="px-2 py-0.5 rounded bg-red-600 text-white font-bold text-[10px] uppercase tracking-wider">
+                      Imposter
                     </span>
                   </div>
 
                   <span
-                    className={`text-xs font-black mt-1 ${
-                      imp.caught ? 'text-rose-400' : 'text-emerald-400'
+                    className={`text-xs font-bold mt-0.5 ${
+                      imp.caught ? 'text-red-700' : 'text-emerald-700'
                     }`}
                   >
                     {imp.caught
                       ? `Caught! Received ${imp.votesReceived} vote${imp.votesReceived === 1 ? '' : 's'}`
-                      : `Escaped! Received only ${imp.votesReceived} vote${imp.votesReceived === 1 ? '' : 's'}`}
+                      : `Escaped! Received ${imp.votesReceived} vote${imp.votesReceived === 1 ? '' : 's'}`}
                   </span>
                 </div>
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="h-24 flex items-center justify-center">
-            <div className="w-8 h-8 border-3 border-rose-500/30 border-t-rose-500 rounded-full animate-spin" />
+          <div className="h-20 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -122,18 +120,17 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
       {/* 2. Secret Word Reveal Card */}
       {revealStep >= 2 && (
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="glass-panel p-5 sm:p-6 rounded-3xl border border-cyan-500/30 bg-gradient-to-r from-cyan-950/30 via-purple-950/30 to-indigo-950/30 text-center flex flex-col items-center"
+          className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs text-center flex flex-col items-center max-w-xl mx-auto"
         >
-          <span className="text-xs uppercase font-extrabold tracking-widest text-cyan-400 mb-1">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
             Category: {roundResult.categoryName}
           </span>
-          <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide">
+          <span className="text-xs font-bold text-slate-500 mt-0.5">
             Secret Word Was:
           </span>
-          <h4 className="text-3xl sm:text-4xl font-black text-white glow-text-cyan mt-1">
+          <h4 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
             {roundResult.secretWord}
           </h4>
         </motion.div>
@@ -142,53 +139,50 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
       {/* 3. Vote Distribution Bar Chart */}
       {revealStep >= 3 && (
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="glass-panel p-6 rounded-3xl space-y-4 border border-white/10"
+          className="bg-white p-6 rounded-3xl space-y-3.5 border border-slate-200 shadow-xs"
         >
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-              <BarChart3 size={16} className="text-purple-400" />
-              <span>Vote Distribution</span>
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <BarChart3 size={15} className="text-slate-500" />
+              <span>Vote Breakdown</span>
             </h4>
             {roundResult.isTie && (
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-[10px] uppercase">
-                TIE VOTE
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold text-[10px] uppercase">
+                Tie Vote
               </span>
             )}
           </div>
 
           <div className="space-y-3">
             {roundResult.voteDistribution.map((item, idx) => {
-              const widthPct = Math.max(8, Math.round((item.voteCount / maxVotes) * 100));
+              const widthPct = Math.max(10, Math.round((item.voteCount / maxVotes) * 100));
 
               return (
                 <div key={item.playerId} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <div className="flex items-center gap-2">
                       <PlayerAvatar name={item.playerName} seed={item.avatarSeed} size="sm" />
-                      <span className="text-white">{item.playerName}</span>
+                      <span className="text-slate-900">{item.playerName}</span>
                       {item.isImposter && (
-                        <span className="px-1.5 py-0.2 rounded bg-rose-600 text-white font-extrabold text-[9px] uppercase">
+                        <span className="px-1.5 py-0.2 rounded bg-red-600 text-white font-bold text-[9px] uppercase">
                           Imposter
                         </span>
                       )}
                     </div>
-                    <span className="text-zinc-300 font-mono">
+                    <span className="text-slate-600 font-mono">
                       {item.voteCount} vote{item.voteCount === 1 ? '' : 's'}
                     </span>
                   </div>
 
-                  <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden p-0.5 border border-white/5">
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${widthPct}%` }}
-                      transition={{ duration: 0.6, delay: idx * 0.08 }}
+                      transition={{ duration: 0.4, delay: idx * 0.05 }}
                       className={`h-full rounded-full ${
-                        item.isImposter
-                          ? 'bg-gradient-to-r from-rose-500 to-amber-500'
-                          : 'bg-gradient-to-r from-purple-500 to-cyan-500'
+                        item.isImposter ? 'bg-red-600' : 'bg-slate-900'
                       }`}
                     />
                   </div>
@@ -200,16 +194,16 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
       )}
 
       {/* Continue CTA */}
-      <div className="pt-2">
+      <div className="pt-2 max-w-md mx-auto">
         <button
           onClick={() => {
             sounds.click();
             onProceedToScoring();
           }}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-black text-lg shadow-xl shadow-cyan-950/50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
         >
           <span>View Round Scoring</span>
-          <ArrowRight size={20} />
+          <ArrowRight size={18} />
         </button>
       </div>
     </div>

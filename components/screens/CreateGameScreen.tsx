@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import {
   Users,
   ShieldAlert,
@@ -20,7 +19,8 @@ import {
   Cpu,
   MapPin,
   Landmark,
-  Layers
+  Layers,
+  Check
 } from 'lucide-react';
 import { GameLogo } from '@/components/common/GameLogo';
 import { CATEGORIES } from '@/data/categories';
@@ -55,7 +55,6 @@ export const CreateGameScreen: React.FC = () => {
 
   const maxImpostersAllowed = getMaxImpostersAllowed(maxPlayers);
 
-  // Auto-adjust imposter count if player count reduces
   const handlePlayerCountChange = (count: number) => {
     sounds.click();
     setMaxPlayers(count);
@@ -106,7 +105,6 @@ export const CreateGameScreen: React.FC = () => {
         return;
       }
 
-      // Store player session in localStorage as backup
       localStorage.setItem('imposter_player_id', data.hostPlayer.id);
       localStorage.setItem('imposter_session_token', data.sessionToken);
       localStorage.setItem('imposter_room_code', data.game.roomCode);
@@ -119,15 +117,15 @@ export const CreateGameScreen: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen p-4 sm:p-6 md:p-8 z-10 max-w-4xl mx-auto flex flex-col justify-between">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 md:p-8 z-10 w-full max-w-5xl mx-auto">
+      {/* Top App Bar */}
+      <div className="flex items-center justify-between pb-6 w-full">
         <button
           onClick={() => {
             sounds.click();
             router.push('/');
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-panel hover:bg-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all cursor-pointer"
         >
           <ArrowLeft size={14} />
           <span>Back</span>
@@ -136,213 +134,217 @@ export const CreateGameScreen: React.FC = () => {
         <GameLogo size="sm" />
       </div>
 
-      <form onSubmit={handleCreateGame} className="space-y-8 my-auto">
+      <form onSubmit={handleCreateGame} className="space-y-6 my-auto pb-8 w-full">
         {/* Title */}
-        <div className="text-center">
-          <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
-            Create New Game
+        <div className="text-center mb-2">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">
+            Create Game Room
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">Configure your room settings & pick a category</p>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Configure your room settings & select a category</p>
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm text-center font-medium animate-in fade-in">
+          <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs text-center font-bold animate-in fade-in max-w-xl mx-auto">
             {error}
           </div>
         )}
 
-        {/* 1. Host Name */}
-        <div className="glass-panel p-5 sm:p-6 rounded-3xl space-y-3">
-          <label className="block text-xs uppercase font-extrabold text-zinc-400 tracking-wider">
-            Your Name (Host)
-          </label>
-          <input
-            type="text"
-            required
-            maxLength={20}
-            placeholder="e.g. Alex"
-            value={hostName}
-            onChange={e => setHostName(e.target.value)}
-            className="w-full px-4 py-3.5 rounded-2xl bg-black/40 border border-white/15 focus:border-rose-500 text-white placeholder-zinc-600 font-bold text-lg focus:outline-none transition-all"
-          />
-        </div>
+        {/* 2-Column Responsive Layout on Desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Left Column: Player Name & Game Rules */}
+          <div className="lg:col-span-6 space-y-4">
+            {/* Host Name Input */}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <label className="block text-[11px] uppercase font-bold text-slate-500 tracking-wider">
+                Your Player Name (Host)
+              </label>
+              <input
+                type="text"
+                required
+                maxLength={20}
+                placeholder="e.g. Alex"
+                value={hostName}
+                onChange={e => setHostName(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-slate-800 text-slate-900 placeholder-slate-400 font-bold text-base focus:outline-none transition-all"
+              />
+            </div>
 
-        {/* 2. Game Settings Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Players count */}
-          <div className="glass-panel p-5 rounded-3xl space-y-3">
+            {/* Settings Group */}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+              {/* Players count */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
+                    <Users size={14} className="text-slate-600" />
+                    <span>Max Players</span>
+                  </span>
+                  <span className="text-xs font-bold text-slate-900 font-mono">{maxPlayers} Players</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  {[4, 5, 6, 8, 10, 12, 16].map(num => (
+                    <button
+                      type="button"
+                      key={num}
+                      onClick={() => handlePlayerCountChange(num)}
+                      className={`flex-1 min-w-[38px] py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        maxPlayers === num
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Imposter count */}
+              <div className="space-y-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
+                    <ShieldAlert size={14} className="text-slate-600" />
+                    <span>Number of Imposters</span>
+                  </span>
+                  <span className="text-xs font-bold text-slate-900 font-mono">
+                    {imposterCount} {imposterCount === 1 ? 'Imposter' : 'Imposters'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: maxImpostersAllowed }, (_, i) => i + 1).map(num => (
+                    <button
+                      type="button"
+                      key={num}
+                      onClick={() => {
+                        sounds.click();
+                        setImposterCount(num);
+                      }}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        imposterCount === num
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {num} {num === 1 ? 'Imposter' : 'Imposters'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rounds */}
+              <div className="space-y-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
+                    <RotateCcw size={14} className="text-slate-600" />
+                    <span>Total Rounds</span>
+                  </span>
+                  <span className="text-xs font-bold text-slate-900 font-mono">{totalRounds} Rounds</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {[3, 5, 7, 10].map(num => (
+                    <button
+                      type="button"
+                      key={num}
+                      onClick={() => {
+                        sounds.click();
+                        setTotalRounds(num);
+                      }}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        totalRounds === num
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Discussion timer */}
+              <div className="space-y-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
+                    <Clock size={14} className="text-slate-600" />
+                    <span>Discussion Timer</span>
+                  </span>
+                  <span className="text-xs font-bold text-slate-900 font-mono">{discussionTime}s</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {[45, 60, 90, 120].map(sec => (
+                    <button
+                      type="button"
+                      key={sec}
+                      onClick={() => {
+                        sounds.click();
+                        setDiscussionTime(sec);
+                      }}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        discussionTime === sec
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {sec}s
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Category Grid */}
+          <div className="lg:col-span-6 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase font-extrabold text-zinc-400 tracking-wider flex items-center gap-1.5">
-                <Users size={14} className="text-rose-400" />
-                <span>Max Players</span>
+              <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
+                <Layers size={14} className="text-slate-600" />
+                <span>Select Category</span>
               </span>
-              <span className="text-lg font-black text-rose-400 font-mono">{maxPlayers} Players</span>
+              <span className="text-xs text-slate-400 font-medium">10 Available</span>
             </div>
 
-            <div className="flex items-center justify-between gap-1">
-              {[4, 5, 6, 8, 10, 12, 16].map(num => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => handlePlayerCountChange(num)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    maxPlayers === num
-                      ? 'bg-rose-600 text-white shadow-md shadow-rose-950/50'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-400'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
-            </div>
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {CATEGORIES.map(cat => {
+                const IconComp = ICON_MAP[cat.icon] || Sparkles;
+                const isSelected = selectedCategoryId === cat.id;
 
-          {/* Imposter count */}
-          <div className="glass-panel p-5 rounded-3xl space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase font-extrabold text-zinc-400 tracking-wider flex items-center gap-1.5">
-                <ShieldAlert size={14} className="text-purple-400" />
-                <span>Number of Imposters</span>
-              </span>
-              <span className="text-lg font-black text-purple-400 font-mono">
-                {imposterCount} {imposterCount === 1 ? 'Imposter' : 'Imposters'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {Array.from({ length: maxImpostersAllowed }, (_, i) => i + 1).map(num => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => {
-                    sounds.click();
-                    setImposterCount(num);
-                  }}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    imposterCount === num
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-950/50'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-400'
-                  }`}
-                >
-                  {num} {num === 1 ? 'Imposter' : 'Imposters'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Rounds */}
-          <div className="glass-panel p-5 rounded-3xl space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase font-extrabold text-zinc-400 tracking-wider flex items-center gap-1.5">
-                <RotateCcw size={14} className="text-cyan-400" />
-                <span>Rounds</span>
-              </span>
-              <span className="text-lg font-black text-cyan-400 font-mono">{totalRounds} Rounds</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {[3, 5, 7, 10].map(num => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => {
-                    sounds.click();
-                    setTotalRounds(num);
-                  }}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    totalRounds === num
-                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-950/50 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-400'
-                  }`}
-                >
-                  {num} Rounds
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Discussion timer */}
-          <div className="glass-panel p-5 rounded-3xl space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase font-extrabold text-zinc-400 tracking-wider flex items-center gap-1.5">
-                <Clock size={14} className="text-amber-400" />
-                <span>Discussion Time</span>
-              </span>
-              <span className="text-lg font-black text-amber-400 font-mono">{discussionTime}s</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {[45, 60, 90, 120].map(sec => (
-                <button
-                  type="button"
-                  key={sec}
-                  onClick={() => {
-                    sounds.click();
-                    setDiscussionTime(sec);
-                  }}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    discussionTime === sec
-                      ? 'bg-amber-500 text-black shadow-md shadow-amber-950/50 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-400'
-                  }`}
-                >
-                  {sec}s
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Category Selection */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-extrabold text-zinc-400 tracking-wider flex items-center gap-1.5">
-              <Layers size={14} className="text-purple-400" />
-              <span>Select Category (10 Available)</span>
-            </span>
-            <span className="text-xs text-zinc-400 font-medium">Click to select</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {CATEGORIES.map(cat => {
-              const IconComp = ICON_MAP[cat.icon] || Sparkles;
-              const isSelected = selectedCategoryId === cat.id;
-
-              return (
-                <motion.div
-                  key={cat.id}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    sounds.click();
-                    setSelectedCategoryId(cat.id);
-                  }}
-                  className={`relative p-3.5 rounded-2xl flex flex-col justify-between text-left transition-all cursor-pointer border ${
-                    isSelected
-                      ? `bg-gradient-to-br ${cat.accentGradient} border-white/50 text-white shadow-xl shadow-purple-950/50 scale-[1.02]`
-                      : 'glass-panel hover:bg-white/10 border-white/10 text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={`p-2 rounded-xl ${isSelected ? 'bg-black/30 text-white' : 'bg-white/5 text-zinc-300'}`}>
-                      <IconComp size={16} />
+                return (
+                  <div
+                    key={cat.id}
+                    onClick={() => {
+                      sounds.click();
+                      setSelectedCategoryId(cat.id);
+                    }}
+                    className={`p-3.5 rounded-2xl flex items-center justify-between text-left transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`p-2 rounded-xl shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>
+                        <IconComp size={16} />
+                      </div>
+                      <div className="min-w-0 truncate">
+                        <h4 className="text-xs font-bold truncate leading-tight">
+                          {cat.name}
+                        </h4>
+                        <p className={`text-[10px] truncate mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
+                          {cat.tagline}
+                        </p>
+                      </div>
                     </div>
+
                     {isSelected && (
-                      <span className="w-2 h-2 rounded-full bg-white shadow-sm shadow-white" />
+                      <Check size={16} className="text-white shrink-0 ml-2" />
                     )}
                   </div>
-
-                  <div>
-                    <h4 className={`text-xs font-black tracking-wide leading-tight ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
-                      {cat.name}
-                    </h4>
-                    <p className={`text-[10px] line-clamp-1 mt-0.5 ${isSelected ? 'text-white/80' : 'text-zinc-500'}`}>
-                      {cat.tagline}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -350,17 +352,17 @@ export const CreateGameScreen: React.FC = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 disabled:opacity-50 text-white font-black text-lg shadow-xl shadow-rose-950/60 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] max-w-lg mx-auto"
         >
           {loading ? (
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               <span>Creating Room...</span>
             </div>
           ) : (
             <>
               <span>Create Game Room</span>
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             </>
           )}
         </button>
