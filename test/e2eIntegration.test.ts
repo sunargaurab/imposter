@@ -160,4 +160,23 @@ describe('Full End-to-End Multiplayer Game Flow (6 Players, 2 Imposters, 5 Round
     expect(finalState?.finalLeaderboard?.length).toBe(6);
     expect(finalState?.finalLeaderboard?.[0].rank).toBe(1);
   });
+
+  it('handles room lookup variations, hash prefixes, and seamless lobby rejoins', () => {
+    const creation = createGame('HostUser', { maxPlayers: 4, imposterCount: 3 }); // 3 imposters will be clamped to 1
+    const code = creation.game.roomCode;
+
+    // Room lookup resilience (lowercase, hashes, whitespace)
+    expect(findGame(code.toLowerCase())).toBeDefined();
+    expect(findGame(`#${code}`)).toBeDefined();
+    expect(findGame(`  ${code}  `)).toBeDefined();
+
+    // Player joins
+    const p1 = joinGame(code, 'PlayerOne');
+    expect(p1.player.name).toBe('PlayerOne');
+
+    // Player re-joins (e.g. refreshed or lost connection in lobby)
+    const p1Rejoin = joinGame(code, 'PlayerOne');
+    expect(p1Rejoin.player.id).toBe(p1.player.id);
+    expect(p1Rejoin.error).toBeUndefined();
+  });
 });

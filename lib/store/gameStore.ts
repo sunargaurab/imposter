@@ -22,7 +22,8 @@ import {
   generateAvatarSeed,
   validatePlayerName,
   validateGameConfig,
-  sanitizePlayerName
+  sanitizePlayerName,
+  getMaxImpostersAllowed
 } from '@/lib/services/gameService';
 import { assignRoundRoles, getNextGamePhase } from '@/lib/services/stateMachine';
 import { computeRoundResults, computeFinalLeaderboard } from '@/lib/services/scoringEngine';
@@ -47,25 +48,31 @@ declare global {
   var __IMPOSTER_EVENT_BUS__: EventEmitter | undefined;
 }
 
-if (!globalThis.__IMPOSTER_GAME_STORE__) {
-  globalThis.__IMPOSTER_GAME_STORE__ = new Map<string, InternalGameState>();
+function getStore(): Map<string, InternalGameState> {
+  if (!globalThis.__IMPOSTER_GAME_STORE__) {
+    globalThis.__IMPOSTER_GAME_STORE__ = new Map<string, InternalGameState>();
+  }
+  return globalThis.__IMPOSTER_GAME_STORE__;
 }
 
-if (!globalThis.__IMPOSTER_EVENT_BUS__) {
-  globalThis.__IMPOSTER_EVENT_BUS__ = new EventEmitter();
-  globalThis.__IMPOSTER_EVENT_BUS__.setMaxListeners(1000);
+function getEventBus(): EventEmitter {
+  if (!globalThis.__IMPOSTER_EVENT_BUS__) {
+    globalThis.__IMPOSTER_EVENT_BUS__ = new EventEmitter();
+    globalThis.__IMPOSTER_EVENT_BUS__.setMaxListeners(1000);
+  }
+  return globalThis.__IMPOSTER_EVENT_BUS__;
 }
 
-const gameStore: Map<string, InternalGameState> = globalThis.__IMPOSTER_GAME_STORE__;
-export const gameEvents: EventEmitter = globalThis.__IMPOSTER_EVENT_BUS__;
+export const gameEvents: EventEmitter = getEventBus();
 
 export function broadcastGameUpdate(gameIdOrCode: string) {
   try {
     const publicState = getPublicGameState(gameIdOrCode);
     if (publicState) {
       const roomUpper = publicState.game.roomCode.trim().toUpperCase();
-      gameEvents.emit(`room:${roomUpper}`, publicState);
-      gameEvents.emit(`game:${publicState.game.id}`, publicState);
+      const bus = getEventBus();
+      bus.emit(`room:${roomUpper}`, publicState);
+      bus.emit(`game:${publicState.game.id}`, publicState);
     }
   } catch {
     // Ignore broadcast errors
@@ -74,7 +81,8 @@ export function broadcastGameUpdate(gameIdOrCode: string) {
 
 // Seed initial DEMO game if not existing
 export function seedDemoGame(): InternalGameState {
-  const existing = Array.from(gameStore.values()).find(g => g.game.roomCode === 'DEMO1');
+  const store = getStore();
+  const existing = Array.from(store.values()).find(g => g.game.roomCode === 'DEMO1');
   if (existing) return existing;
 
   const gameId = 'gm_demo_1';
@@ -127,8 +135,8 @@ export function seedDemoGame(): InternalGameState {
     usedWords: [secretWord]
   };
 
-  gameStore.set(gameId, state);
-  gameStore.set('DEMO1', state);
+  store.set(gameId, state);
+  store.set('DEMO1', state);
   return state;
 }
 
@@ -137,8 +145,23 @@ seedDemoGame();
 
 export function findGame(codeOrId: string): InternalGameState | undefined {
   if (!codeOrId) return undefined;
-  const upper = codeOrId.trim().toUpperCase();
-  let state = gameStore.get(upper) || gameStore.get(codeOrId.trim());
+  const store = getStore();
+  const clean = codeOrId.trim().replace(/^[#/]+/, '');
+  const upper = clean.toUpperCase();
+
+  let state = store.get(upper) || store.get(clean);
+  if (!state) {
+    // Fallback: search all games in store by roomCode or game id
+    for (const s of store.values()) {
+      if (s.game.roomCode.trim().toUpperCase() === upper || s.game.id === clean) {
+        state = s;
+        store.set(upper, s);
+        store.set(s.game.id, s);
+        break;
+      }
+    }
+  }
+
   if (!state && upper === 'DEMO1') {
     state = seedDemoGame();
   }
@@ -153,13 +176,19 @@ export function createGame(
   hostName: string,
   config: Partial<GameConfig>
 ): { game: Game; hostPlayer: Player; sessionToken: string; error?: string } {
+  const store = getStore();
   const cleanName = sanitizePlayerName(hostName);
   const nameVal = validatePlayerName(cleanName);
   if (!nameVal.valid) {
     return { game: {} as Game, hostPlayer: {} as Player, sessionToken: '', error: nameVal.error };
   }
 
-  const configVal = validateGameConfig(config);
+  const maxPlayers = config.maxPlayers ?? 6;
+  const maxImpostersAllowed = getMaxImpostersAllowed(maxPlayers);
+  const requestedImposters = config.imposterCount ?? 1;
+  const clampedImposters = Math.max(1, Math.min(requestedImposters, maxImpostersAllowed));
+
+  const configVal = validateGameConfig({ ...config, maxPlayers, imposterCount: clampedImposters });
   if (!configVal.valid) {
     return { game: {} as Game, hostPlayer: {} as Player, sessionToken: '', error: configVal.error };
   }
@@ -170,8 +199,10 @@ export function createGame(
 
   // Find unused room code
   let roomCode = generateRoomCode();
-  while (gameStore.has(roomCode)) {
+  let attempts = 0;
+  while (store.has(roomCode) && attempts < 50) {
     roomCode = generateRoomCode();
+    attempts++;
   }
 
   const selectedCategories = (config.categoryIds && config.categoryIds.length > 0)
@@ -179,14 +210,14 @@ export function createGame(
     : [config.categoryId || 'celebrities'];
 
   const fullConfig: GameConfig = {
-    maxPlayers: config.maxPlayers ?? 6,
-    imposterCount: config.imposterCount ?? 2,
+    maxPlayers,
+    imposterCount: clampedImposters,
     totalRounds: config.totalRounds ?? 5,
     categoryId: selectedCategories[0],
     categoryIds: selectedCategories,
     discussionTimeSeconds: config.discussionTimeSeconds ?? 300,
-    normalCorrectVoteScore: config.normalCorrectVoteScore ?? 2,
-    normalWrongVoteScore: config.normalWrongVoteScore ?? 0,
+    normalCorrectVoteScore: 2,
+    normalWrongVoteScore: 0,
   };
 
   const game: Game = {
@@ -226,8 +257,9 @@ export function createGame(
     usedWords: []
   };
 
-  gameStore.set(gameId, state);
-  gameStore.set(roomCode, state);
+  store.set(gameId, state);
+  store.set(roomCode, state);
+  store.set(roomCode.toUpperCase(), state);
 
   broadcastGameUpdate(roomCode);
   return { game, hostPlayer, sessionToken };
@@ -239,18 +271,31 @@ export function joinGame(
 ): { game: Game; player: Player; sessionToken: string; error?: string } {
   const state = findGame(roomCode);
   if (!state) {
-    return { game: {} as Game, player: {} as Player, sessionToken: '', error: 'Game room not found.' };
+    return { game: {} as Game, player: {} as Player, sessionToken: '', error: 'Game room not found. Check code or create a new game.' };
   }
 
   if (state.game.status !== 'LOBBY') {
-    return { game: {} as Game, player: {} as Player, sessionToken: '', error: 'Game has already started.' };
+    return { game: {} as Game, player: {} as Player, sessionToken: '', error: 'Game is already in progress.' };
+  }
+
+  const cleanName = sanitizePlayerName(playerName);
+
+  // Check if player with same name already joined in lobby (allows seamless reconnect)
+  const existingPlayer = state.players.find(p => p.name.toLowerCase().trim() === cleanName.toLowerCase());
+  if (existingPlayer) {
+    const existingToken = state.playerTokens.get(existingPlayer.id) || generateSessionToken();
+    existingPlayer.connected = true;
+    existingPlayer.lastActiveAt = new Date().toISOString();
+    state.playerTokens.set(existingPlayer.id, existingToken);
+    state.game.updatedAt = new Date().toISOString();
+    broadcastGameUpdate(state.game.roomCode);
+    return { game: state.game, player: existingPlayer, sessionToken: existingToken };
   }
 
   if (state.players.length >= state.game.config.maxPlayers) {
     return { game: {} as Game, player: {} as Player, sessionToken: '', error: 'Game lobby is full.' };
   }
 
-  const cleanName = sanitizePlayerName(playerName);
   const nameVal = validatePlayerName(cleanName, state.players);
   if (!nameVal.valid) {
     return { game: {} as Game, player: {} as Player, sessionToken: '', error: nameVal.error };

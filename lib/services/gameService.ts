@@ -39,8 +39,8 @@ export function sanitizePlayerName(name: string): string {
 
 export function validatePlayerName(name: string, existingPlayers: Player[] = []): { valid: boolean; error?: string } {
   const sanitized = sanitizePlayerName(name);
-  if (!sanitized || sanitized.length < 2) {
-    return { valid: false, error: 'Name must be at least 2 characters.' };
+  if (!sanitized || sanitized.length < 1) {
+    return { valid: false, error: 'Name must be at least 1 character.' };
   }
   if (sanitized.length > 20) {
     return { valid: false, error: 'Name cannot exceed 20 characters.' };
@@ -56,26 +56,27 @@ export function validatePlayerName(name: string, existingPlayers: Player[] = [])
 
 export function getMaxImpostersAllowed(playerCount: number): number {
   if (playerCount < 3) return 0;
-  // Ensure at least 2 normal players remain
-  // e.g. 3-4 players -> 1 imposter; 5-6 players -> 2 imposters; 7-8 players -> 3 imposters; etc.
-  return Math.max(1, Math.floor((playerCount - 2) / 2));
+  if (playerCount <= 4) return 1;
+  if (playerCount <= 6) return 2;
+  if (playerCount <= 8) return 3;
+  return Math.max(1, Math.floor((playerCount - 1) / 2));
 }
 
 export function validateGameConfig(config: Partial<GameConfig>, playerCount = 6): { valid: boolean; error?: string } {
   const maxPlayers = config.maxPlayers ?? 6;
-  if (maxPlayers < 3 || maxPlayers > 20) {
-    return { valid: false, error: 'Player count must be between 3 and 20.' };
+  if (maxPlayers < 3 || maxPlayers > 30) {
+    return { valid: false, error: 'Player count must be between 3 and 30.' };
   }
 
-  const imposterCount = config.imposterCount ?? 2;
+  const imposterCount = config.imposterCount ?? 1;
   const maxImposters = getMaxImpostersAllowed(maxPlayers);
   if (imposterCount < 1 || imposterCount > maxImposters) {
     return { valid: false, error: `Invalid imposter count. Max ${maxImposters} imposters for ${maxPlayers} players.` };
   }
 
   const rounds = config.totalRounds ?? 5;
-  if (![3, 5, 7, 10].includes(rounds)) {
-    return { valid: false, error: 'Rounds must be 3, 5, 7, or 10.' };
+  if (rounds < 1 || rounds > 20) {
+    return { valid: false, error: 'Rounds must be between 1 and 20.' };
   }
 
   return { valid: true };

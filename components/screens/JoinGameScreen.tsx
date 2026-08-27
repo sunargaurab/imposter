@@ -22,15 +22,20 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanCode = roomCode.trim().toUpperCase();
+    // Extract 5-letter code even if a full URL or hash was pasted
+    let cleanCode = roomCode.trim().toUpperCase();
+    if (cleanCode.includes('/JOIN/')) {
+      cleanCode = cleanCode.split('/JOIN/').pop()?.trim() || cleanCode;
+    }
+    cleanCode = cleanCode.replace(/[^A-Z0-9]/g, '').substring(0, 6);
     const cleanName = playerName.trim();
 
     if (!cleanCode) {
-      setError('Enter room code.');
+      setError('Please enter a valid room code.');
       return;
     }
     if (!cleanName) {
-      setError('Enter your player name.');
+      setError('Please enter your player name.');
       return;
     }
 

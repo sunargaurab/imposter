@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { X, QrCode, Copy, Check } from 'lucide-react';
+import { X, QrCode, Copy, Check, Wifi } from 'lucide-react';
 import { sounds } from '@/lib/audio/soundEffects';
 
 interface QRCodeModalProps {
@@ -13,30 +13,59 @@ interface QRCodeModalProps {
 
 export const QRCodeModal: React.FC<QRCodeModalProps> = ({ roomCode, isOpen, onClose }) => {
   const [qrUrl, setQrUrl] = useState<string>('');
+  const [joinUrl, setJoinUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
-
-  const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/join/${roomCode}` : '';
+  const [isLan, setIsLan] = useState(false);
 
   useEffect(() => {
-    if (isOpen && joinUrl) {
-      QRCode.toDataURL(joinUrl, {
-        width: 320,
-        margin: 2,
-        color: {
-          dark: '#0F172A',
-          light: '#FFFFFF'
+    if (!isOpen) return;
+
+    const computeJoinUrl = async () => {
+      let baseUrl = window.location.origin;
+
+      // If running on localhost or 127.0.0.1, try to discover LAN IP for mobile scan compatibility
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        try {
+          const res = await fetch('/api/info');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.localIp && data.localIp !== 'localhost') {
+              const port = window.location.port ? `:${window.location.port}` : '';
+              baseUrl = `http://${data.localIp}${port}`;
+              setIsLan(true);
+            }
+          }
+        } catch {
+          // Fallback to origin
         }
-      }).then(url => {
+      }
+
+      const finalUrl = `${baseUrl}/join/${roomCode}`;
+      setJoinUrl(finalUrl);
+
+      try {
+        const url = await QRCode.toDataURL(finalUrl, {
+          width: 320,
+          margin: 2,
+          color: {
+            dark: '#0F172A',
+            light: '#FFFFFF'
+          }
+        });
         setQrUrl(url);
-      }).catch(() => {});
-    }
-  }, [isOpen, joinUrl]);
+      } catch {
+        // QR catch
+      }
+    };
+
+    computeJoinUrl();
+  }, [isOpen, roomCode]);
 
   if (!isOpen) return null;
 
   const handleCopy = () => {
     sounds.click();
-    navigator.clipboard.writeText(joinUrl);
+    navigator.clipboard.writeText(joinUrl || `${window.location.origin}/join/${roomCode}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -57,10 +86,10 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ roomCode, isOpen, onCl
         </div>
 
         <h3 className="text-lg font-bold text-slate-900 mb-0.5">Scan to Join</h3>
-        <p className="text-xs text-slate-500 mb-4">Point phone camera to join instantly</p>
+        <p className="text-xs text-slate-500 mb-4">Point any phone camera to join instantly</p>
 
         {/* QR Image Box */}
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl mb-4">
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl mb-3">
           {qrUrl ? (
             <img src={qrUrl} alt={`QR code to join room ${roomCode}`} className="w-52 h-52 rounded-xl" />
           ) : (
@@ -69,6 +98,13 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ roomCode, isOpen, onCl
             </div>
           )}
         </div>
+
+        {isLan && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold mb-3">
+            <Wifi size={12} />
+            <span>Wi-Fi Network Join Ready</span>
+          </div>
+        )}
 
         <div className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
           <div className="text-left">
