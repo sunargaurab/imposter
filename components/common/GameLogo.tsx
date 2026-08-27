@@ -18,7 +18,7 @@ export const GameLogo: React.FC<GameLogoProps> = ({ size = 'md', showSubtitle = 
       <div className="flex items-center gap-2.5">
         <motion.div
           whileTap={{ scale: 0.95 }}
-          className={`flex items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm ${
+          className={`flex items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm ${
             isSm ? 'w-8 h-8 text-base' : isLg ? 'w-14 h-14 text-2xl' : 'w-10 h-10 text-xl'
           }`}
         >
@@ -37,7 +37,7 @@ export const GameLogo: React.FC<GameLogoProps> = ({ size = 'md', showSubtitle = 
       </div>
 
       {showSubtitle && (
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mt-1">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-600 mt-1">
           Party Game
         </span>
       )}

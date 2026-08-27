@@ -88,7 +88,6 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 {secondPlace.totalScore} pts
               </span>
 
-              {/* Podium Column */}
               <div className="w-full h-24 sm:h-28 rounded-t-2xl bg-slate-100 border-t-2 border-slate-300 flex items-center justify-center font-black text-2xl text-slate-600">
                 2
               </div>
@@ -112,7 +111,6 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 {firstPlace.totalScore} pts
               </span>
 
-              {/* Podium Column */}
               <div className="w-full h-32 sm:h-40 rounded-t-2xl bg-amber-100 border-t-4 border-amber-400 flex flex-col items-center justify-center font-black text-4xl text-amber-800 shadow-xs">
                 <span>1</span>
                 <span className="text-[10px] uppercase font-bold tracking-wider text-amber-700 mt-1">Winner</span>
@@ -137,7 +135,6 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 {thirdPlace.totalScore} pts
               </span>
 
-              {/* Podium Column */}
               <div className="w-full h-16 sm:h-20 rounded-t-2xl bg-amber-50 border-t-2 border-amber-300 flex items-center justify-center font-black text-xl text-amber-800">
                 3
               </div>
@@ -149,7 +146,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
       {/* STATS LIST */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl space-y-4 border border-slate-200 shadow-xs">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-          <Award size={16} className="text-slate-600" />
+          <Award size={16} className="text-blue-600" />
           <span>Player Rankings & Badges</span>
         </h3>
 
@@ -187,7 +184,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                     <div className="flex items-center gap-2 truncate">
                       <span className="font-bold text-sm sm:text-base text-slate-900 truncate">{entry.player.name}</span>
                       {isCurrent && <span className="text-[10px] text-blue-600 font-bold shrink-0">(You)</span>}
-                      <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold shrink-0">
+                      <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold shrink-0">
                         {entry.stats.title}
                       </span>
                     </div>
@@ -195,7 +192,6 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                     <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
                       <span>🕵️ {entry.stats.correctVotes} correct</span>
                       <span>🥷 {entry.stats.timesEscaped} escapes</span>
-                      <span>🎯 {entry.stats.totalVotesReceived} votes received</span>
                     </div>
                   </div>
                 </div>
@@ -217,7 +213,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
               sounds.click();
               onRestartGame();
             }}
-            className="w-full sm:flex-1 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            className="w-full sm:flex-1 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
             <RotateCcw size={16} />
             <span>Play Again in Same Room</span>
@@ -230,9 +226,9 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
 
         <button
           onClick={handleShare}
-          className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-xs"
+          className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-blue-50 border border-blue-200 text-blue-900 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-xs"
         >
-          <Share2 size={16} />
+          <Share2 size={16} className="text-blue-600" />
           <span>Share Results</span>
         </button>
 
@@ -241,7 +237,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
           className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shadow-xs"
         >
           <Home size={16} />
-          <span>Exit to Home</span>
+          <span>Home</span>
         </a>
       </div>
     </div>

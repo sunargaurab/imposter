@@ -71,8 +71,8 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
         </h2>
         <p className="text-xs sm:text-sm text-slate-500">
           {isSubmitted
-            ? 'Your vote is locked. Waiting for other players to finish voting...'
-            : 'Select the player you suspect and confirm your secret vote.'}
+            ? 'Vote submitted! Waiting for other players...'
+            : 'Select the player you suspect and cast your secret vote.'}
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                   ? 'opacity-40 bg-slate-100 border border-slate-200 cursor-not-allowed'
                   : isSubmitted
                   ? isSelected
-                    ? 'bg-slate-900 text-white border-2 border-slate-900 shadow-sm'
+                    ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
                     : 'bg-white border border-slate-200 opacity-50 cursor-default'
                   : isSelected
                   ? 'bg-blue-50 border-2 border-blue-600 shadow-xs cursor-pointer'
@@ -105,7 +105,7 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
               }`}
             >
               {isSelected && (
-                <div className={`absolute top-3 right-3 p-0.5 rounded-full ${isSubmitted ? 'bg-white text-slate-900' : 'bg-blue-600 text-white'}`}>
+                <div className={`absolute top-3 right-3 p-0.5 rounded-full ${isSubmitted ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
                   <CheckCircle2 size={16} />
                 </div>
               )}
@@ -123,8 +123,8 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                 {player.name}
               </span>
 
-              <span className={`text-[11px] font-semibold mt-0.5 ${isSelected && isSubmitted ? 'text-slate-300' : 'text-slate-500'}`}>
-                {isSelf ? '(You - Cannot vote)' : `${player.totalScore} pts`}
+              <span className={`text-[11px] font-semibold mt-0.5 ${isSelected && isSubmitted ? 'text-blue-100' : 'text-slate-500'}`}>
+                {isSelf ? '(You)' : `${player.totalScore} pts`}
               </span>
             </div>
           );
@@ -137,17 +137,17 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs font-bold">
             <span className="text-slate-600 flex items-center gap-1.5">
-              <Users size={14} className="text-slate-500" />
+              <Users size={14} className="text-blue-600" />
               <span>Players Voted</span>
             </span>
-            <span className="text-slate-900 font-mono">
+            <span className="text-blue-700 font-mono">
               {totalVotedCount} / {players.length} Submitted
             </span>
           </div>
 
           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
             <motion.div
-              className="h-full bg-slate-900 rounded-full"
+              className="h-full bg-blue-600 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.3 }}
@@ -160,7 +160,7 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
           <button
             onClick={handleSubmit}
             disabled={!selectedTargetId || submitting}
-            className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold text-base shadow-md shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
             {submitting ? (
               <div className="flex items-center gap-2">

@@ -22,19 +22,19 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
     sounds.imposterReveal();
 
     const t1 = setTimeout(() => {
-      setRevealStep(1); // Imposters
+      setRevealStep(1);
       sounds.cardReveal();
-    }, 1000);
+    }, 900);
 
     const t2 = setTimeout(() => {
-      setRevealStep(2); // Secret Word
+      setRevealStep(2);
       sounds.scoreDing();
-    }, 2200);
+    }, 2000);
 
     const t3 = setTimeout(() => {
-      setRevealStep(3); // Votes
+      setRevealStep(3);
       sounds.tick();
-    }, 3400);
+    }, 3100);
 
     return () => {
       clearTimeout(t1);
@@ -50,20 +50,20 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
       {/* Title */}
       <div className="text-center space-y-1">
         <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400">
-          Round {roundResult.roundNumber} Reveal
+          Round {roundResult.roundNumber} Results
         </span>
         <h2 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">
-          The Truth Revealed
+          The Reveal
         </h2>
       </div>
 
       {/* 1. Imposter Identities Reveal Card */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs">
-        <div className="text-center mb-4">
+      <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-xs">
+        <div className="text-center mb-3">
           <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">
             Identity Reveal
           </span>
-          <h3 className="text-xl font-black text-slate-900 uppercase">
+          <h3 className="text-lg sm:text-xl font-black text-slate-900 uppercase">
             The Imposter{roundResult.imposters.length > 1 ? 's Were' : ' Was'}
           </h3>
         </div>
@@ -103,16 +103,16 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
                     }`}
                   >
                     {imp.caught
-                      ? `Caught! Received ${imp.votesReceived} vote${imp.votesReceived === 1 ? '' : 's'}`
-                      : `Escaped! Received ${imp.votesReceived} vote${imp.votesReceived === 1 ? '' : 's'}`}
+                      ? `Caught! (${imp.votesReceived} vote${imp.votesReceived === 1 ? '' : 's'})`
+                      : `Escaped! (${imp.votesReceived} vote${imp.votesReceived === 1 ? '' : 's'})`}
                   </span>
                 </div>
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="h-20 flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin" />
+          <div className="h-16 flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -128,9 +128,9 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
             Category: {roundResult.categoryName}
           </span>
           <span className="text-xs font-bold text-slate-500 mt-0.5">
-            Secret Word Was:
+            Secret Word:
           </span>
-          <h4 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+          <h4 className="text-2xl sm:text-3xl font-black text-blue-600 mt-0.5">
             {roundResult.secretWord}
           </h4>
         </motion.div>
@@ -145,7 +145,7 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
         >
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <BarChart3 size={15} className="text-slate-500" />
+              <BarChart3 size={15} className="text-blue-600" />
               <span>Vote Breakdown</span>
             </h4>
             {roundResult.isTie && (
@@ -182,7 +182,7 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
                       animate={{ width: `${widthPct}%` }}
                       transition={{ duration: 0.4, delay: idx * 0.05 }}
                       className={`h-full rounded-full ${
-                        item.isImposter ? 'bg-red-600' : 'bg-slate-900'
+                        item.isImposter ? 'bg-red-600' : 'bg-blue-600'
                       }`}
                     />
                   </div>
@@ -200,9 +200,9 @@ export const VoteResultsScreen: React.FC<VoteResultsScreenProps> = ({
             sounds.click();
             onProceedToScoring();
           }}
-          className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-md shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
         >
-          <span>View Round Scoring</span>
+          <span>View Scoring</span>
           <ArrowRight size={18} />
         </button>
       </div>

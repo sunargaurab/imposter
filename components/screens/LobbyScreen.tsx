@@ -28,6 +28,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const [isQrOpen, setIsQrOpen] = useState(false);
   const isHost = currentPlayer?.isHost ?? false;
   const category = getCategoryById(game.config.categoryId);
+  const categoryCount = game.config.categoryIds?.length || 1;
+  const categoryLabel = categoryCount > 1 ? `${categoryCount} Categories` : category.name;
 
   const canStart = players.length >= 3;
   const missingPlayers = Math.max(0, 3 - players.length);
@@ -37,11 +39,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       {/* Lobby Header Card */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs text-center">
         <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-1">
-          Game Lobby
+          Lobby
         </span>
 
         <h2 className="text-2xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight mb-4">
-          Room Code: <span className="font-mono tracking-wider">{game.roomCode}</span>
+          Room <span className="font-mono text-blue-600 tracking-wider">{game.roomCode}</span>
         </h2>
 
         <div className="flex flex-wrap items-center justify-center gap-2.5 mb-5">
@@ -51,30 +53,30 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               sounds.click();
               setIsQrOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-slate-700 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-blue-50 hover:bg-blue-100/80 text-xs font-bold text-blue-700 transition-all cursor-pointer border border-blue-100"
           >
-            <QrCode size={15} className="text-slate-600" />
-            <span>Show QR Code</span>
+            <QrCode size={15} className="text-blue-600" />
+            <span>QR Code</span>
           </button>
         </div>
 
         {/* Config Chips */}
         <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-600">
           <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-1.5">
-            <Sparkles size={13} className="text-slate-500" />
-            <span>{category.name}</span>
+            <Sparkles size={13} className="text-blue-600" />
+            <span>{categoryLabel}</span>
           </span>
           <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-1.5">
-            <ShieldAlert size={13} className="text-slate-500" />
+            <ShieldAlert size={13} className="text-blue-600" />
             <span>{game.config.imposterCount} {game.config.imposterCount === 1 ? 'Imposter' : 'Imposters'}</span>
           </span>
           <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-1.5">
-            <RotateCcw size={13} className="text-slate-500" />
+            <RotateCcw size={13} className="text-blue-600" />
             <span>{game.config.totalRounds} Rounds</span>
           </span>
           <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-1.5">
-            <Clock size={13} className="text-slate-500" />
-            <span>{game.config.discussionTimeSeconds}s Timer</span>
+            <Clock size={13} className="text-blue-600" />
+            <span>{game.config.discussionTimeSeconds >= 60 ? `${Math.floor(game.config.discussionTimeSeconds / 60)} min` : `${game.config.discussionTimeSeconds}s`}</span>
           </span>
         </div>
       </div>
@@ -83,17 +85,17 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users size={20} className="text-slate-700" />
+            <Users size={18} className="text-blue-600" />
             <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">
               Players Joined
             </h3>
           </div>
-          <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-mono font-bold text-xs">
+          <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-mono font-bold text-xs">
             {players.length} / {game.config.maxPlayers}
           </span>
         </div>
 
-        {/* Responsive Multi-column Players Grid */}
+        {/* Players Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
           {players.map((player, idx) => {
             const isCurrent = currentPlayer?.id === player.id;
@@ -106,7 +108,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 transition={{ delay: idx * 0.04 }}
                 className={`p-4 rounded-2xl flex flex-col items-center text-center transition-all ${
                   isCurrent
-                    ? 'bg-blue-50/70 border-2 border-blue-500/50 shadow-xs'
+                    ? 'bg-blue-50/70 border-2 border-blue-500 shadow-xs'
                     : 'bg-slate-50 border border-slate-200'
                 }`}
               >
@@ -131,7 +133,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             );
           })}
 
-          {/* Empty slot placeholders */}
+          {/* Empty placeholders */}
           {Array.from({ length: Math.max(0, Math.min(5, game.config.maxPlayers - players.length)) }).map((_, i) => (
             <div
               key={`empty-${i}`}
@@ -140,7 +142,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-1.5">
                 <Users size={15} className="text-slate-400" />
               </div>
-              <span className="text-[11px] font-medium text-slate-400">Waiting for player...</span>
+              <span className="text-[11px] font-medium text-slate-400">Waiting...</span>
             </div>
           ))}
         </div>
@@ -155,12 +157,12 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                   onStartGame();
                 }}
                 disabled={!canStart || isStarting}
-                className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold text-base shadow-md shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
               >
                 {isStarting ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Starting Game...</span>
+                    <span>Starting...</span>
                   </div>
                 ) : (
                   <>
@@ -176,12 +178,12 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               )}
             </div>
           ) : (
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center flex flex-col items-center">
-              <div className="flex items-center gap-2 text-slate-800 font-bold text-sm mb-1">
-                <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                <span>Waiting for the Host to start the game...</span>
+            <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 text-center flex flex-col items-center">
+              <div className="flex items-center gap-2 text-blue-900 font-bold text-sm mb-0.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
+                <span>Waiting for Host to start...</span>
               </div>
-              <p className="text-xs text-slate-500">Get ready to discuss and find the imposter!</p>
+              <p className="text-xs text-slate-500">Game will start automatically</p>
             </div>
           )}
         </div>

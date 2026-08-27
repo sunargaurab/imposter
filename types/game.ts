@@ -16,8 +16,9 @@ export interface GameConfig {
   maxPlayers: number;             // 3 - 20
   imposterCount: number;          // dynamic, based on players (e.g. 1 or 2 for 6 players)
   totalRounds: number;            // 3, 5, 7, 10
-  categoryId: string;             // e.g. 'celebrities'
-  discussionTimeSeconds: number;  // default 60
+  categoryId: string;             // primary or first selected category
+  categoryIds?: string[];         // multiple selected categories!
+  discussionTimeSeconds: number;  // default 300 (5 min)
   normalCorrectVoteScore: number; // default 2
   normalWrongVoteScore: number;   // default 0
 }
@@ -109,7 +110,7 @@ export interface PublicGameState {
 export interface PlayerSecretView {
   role: PlayerRole;
   secretWord?: string;       // defined if role === 'NORMAL'
-  imposterMessage?: string;  // defined if role === 'IMPOSTER' (e.g. "YOU ARE THE IMPOSTER")
+  imposterMessage?: string;  // defined if role === 'IMPOSTER'
   categoryName: string;
   roundNumber: number;
 }
@@ -152,7 +153,7 @@ export interface FinalPlayerRanking {
     correctVotes: number;
     incorrectVotes: number;
     totalVotesReceived: number;
-    title: string; // e.g. "Master Detective", "Phantom Infiltrator", "Most Sus"
+    title: string;
   };
 }
 

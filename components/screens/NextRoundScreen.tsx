@@ -45,7 +45,7 @@ export const NextRoundScreen: React.FC<NextRoundScreenProps> = ({ game, onProcee
           New secret roles and a new secret word are being selected.
         </p>
 
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-900 flex items-center justify-center font-black text-3xl text-white shadow-xs mb-6 animate-pulse">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center font-black text-3xl text-white shadow-md shadow-blue-600/25 mb-6 animate-pulse">
           {countdown}
         </div>
 
@@ -54,7 +54,7 @@ export const NextRoundScreen: React.FC<NextRoundScreenProps> = ({ game, onProcee
             sounds.click();
             onProceed();
           }}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
         >
           <span>Start Now</span>
           <ArrowRight size={13} />

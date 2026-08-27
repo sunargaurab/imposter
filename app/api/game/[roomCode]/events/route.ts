@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { getPublicGameState } from '@/lib/store/gameStore';
+import { getPublicGameState, gameEvents } from '@/lib/store/gameStore';
+import { PublicGameState } from '@/types/game';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,40 +9,49 @@ export async function GET(
   { params }: { params: Promise<{ roomCode: string }> }
 ) {
   const { roomCode } = await params;
+  const upperCode = roomCode.trim().toUpperCase();
 
   const responseStream = new TransformStream();
   const writer = responseStream.writable.getWriter();
   const encoder = new TextEncoder();
 
   let isClosed = false;
-  let lastUpdatedAt = '';
 
-  const sendState = () => {
-    if (isClosed) return;
+  const sendState = (state: PublicGameState | null) => {
+    if (isClosed || !state) return;
     try {
-      const state = getPublicGameState(roomCode);
-      if (state) {
-        if (state.game.updatedAt !== lastUpdatedAt) {
-          lastUpdatedAt = state.game.updatedAt;
-          writer.write(encoder.encode(`data: ${JSON.stringify(state)}\n\n`));
-        }
-      }
+      writer.write(encoder.encode(`data: ${JSON.stringify(state)}\n\n`));
     } catch {
       isClosed = true;
     }
   };
 
-  // Immediate first emit
-  sendState();
+  // 1. Immediate first emit
+  const initialState = getPublicGameState(upperCode);
+  if (initialState) {
+    sendState(initialState);
+  }
 
-  // Pulse interval for changes (1 sec interval is gentle and fast)
-  const intervalId = setInterval(() => {
-    sendState();
-  }, 800);
+  // 2. Real-time PubSub Event Listener (Instant Socket-like update)
+  const onGameUpdate = (newState: PublicGameState) => {
+    sendState(newState);
+  };
+
+  gameEvents.on(`room:${upperCode}`, onGameUpdate);
+
+  // 3. Heartbeat / fallback pulse every 2s
+  const heartbeatId = setInterval(() => {
+    if (isClosed) return;
+    const currentState = getPublicGameState(upperCode);
+    if (currentState) {
+      sendState(currentState);
+    }
+  }, 2000);
 
   req.signal.addEventListener('abort', () => {
     isClosed = true;
-    clearInterval(intervalId);
+    clearInterval(heartbeatId);
+    gameEvents.off(`room:${upperCode}`, onGameUpdate);
     try {
       writer.close();
     } catch {}

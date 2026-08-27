@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { PlusCircle, LogIn, Users, ShieldCheck, HelpCircle, Flame, ArrowRight, Play, X } from 'lucide-react';
+import { Plus, LogIn, HelpCircle, X, Play } from 'lucide-react';
 import { GameLogo } from '@/components/common/GameLogo';
 import { SoundController } from '@/components/common/SoundController';
 import { sounds } from '@/lib/audio/soundEffects';
@@ -24,32 +24,32 @@ export const HomeScreen: React.FC = () => {
             }}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all cursor-pointer"
           >
-            <HelpCircle size={14} className="text-slate-500" />
-            <span>How to Play</span>
+            <HelpCircle size={14} className="text-blue-600" />
+            <span>Rules</span>
           </button>
           <SoundController />
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="w-full max-w-2xl mx-auto my-auto py-8 sm:py-12 flex flex-col items-center text-center">
-        {/* App Icon Banner */}
+      {/* Main Hero */}
+      <main className="w-full max-w-xl mx-auto my-auto py-8 flex flex-col items-center text-center">
+        {/* App Icon */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-slate-900 text-white flex items-center justify-center text-4xl sm:text-5xl shadow-md mb-5"
+          transition={{ duration: 0.25 }}
+          className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-blue-600 text-white flex items-center justify-center text-4xl sm:text-5xl shadow-lg shadow-blue-600/25 mb-4 select-none"
         >
           <span>🎭</span>
         </motion.div>
 
         {/* Title */}
-        <h1 className="text-3xl sm:text-5xl font-black tracking-tight uppercase text-slate-900 mb-3">
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight uppercase text-slate-900 mb-2">
           Imposter
         </h1>
 
-        <p className="text-sm sm:text-base text-slate-600 font-medium max-w-md mx-auto mb-8 leading-relaxed">
-          Find the liar. Protect your secret word. Outsmart your friends in real-time.
+        <p className="text-sm sm:text-base text-slate-500 font-medium max-w-sm mx-auto mb-8">
+          Find the liar. Protect the secret word.
         </p>
 
         {/* Action Buttons */}
@@ -57,118 +57,81 @@ export const HomeScreen: React.FC = () => {
           <Link
             href="/create"
             onClick={() => sounds.click()}
-            className="w-full sm:w-1/2 flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer"
+            className="w-full sm:w-1/2 flex items-center justify-center gap-2 py-4 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-600/25 transition-all active:scale-[0.99] cursor-pointer"
           >
-            <PlusCircle size={18} />
+            <Plus size={18} />
             <span>Create Game</span>
           </Link>
 
           <Link
             href="/join"
             onClick={() => sounds.click()}
-            className="w-full sm:w-1/2 flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-bold text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer"
+            className="w-full sm:w-1/2 flex items-center justify-center gap-2 py-4 px-5 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-bold text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer"
           >
-            <LogIn size={18} className="text-slate-600" />
+            <LogIn size={18} className="text-blue-600" />
             <span>Join Room</span>
           </Link>
         </div>
 
-        {/* Simulator Link */}
+        {/* Demo Sandbox Link */}
         <Link
           href="/demo"
           onClick={() => sounds.click()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold transition-all mb-10"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-all border border-blue-100"
         >
-          <Play size={12} className="text-slate-700 fill-slate-700" />
-          <span>Interactive 6-Player Sandbox Mode</span>
-          <ArrowRight size={12} />
+          <Play size={12} className="fill-blue-600 text-blue-600" />
+          <span>Interactive 6-Player Sandbox</span>
         </Link>
-
-        {/* Feature Highlights */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg">
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center">
-            <div className="p-2 rounded-xl bg-slate-100 text-slate-700 mb-2">
-              <Users size={18} />
-            </div>
-            <span className="text-xs font-bold text-slate-900">3–20 Players</span>
-            <span className="text-[11px] text-slate-500 mt-0.5">Real-time party multiplayer</span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center">
-            <div className="p-2 rounded-xl bg-slate-100 text-slate-700 mb-2">
-              <Flame size={18} />
-            </div>
-            <span className="text-xs font-bold text-slate-900">10 Categories</span>
-            <span className="text-[11px] text-slate-500 mt-0.5">300+ handpicked secret cards</span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center">
-            <div className="p-2 rounded-xl bg-slate-100 text-slate-700 mb-2">
-              <ShieldCheck size={18} />
-            </div>
-            <span className="text-xs font-bold text-slate-900">Instant QR Join</span>
-            <span className="text-[11px] text-slate-500 mt-0.5">No login or app install needed</span>
-          </div>
-        </div>
       </main>
 
-      {/* App Footer */}
+      {/* Footer */}
       <footer className="text-center text-xs text-slate-400 py-3">
-        <span>© {new Date().getFullYear()} Imposter • Social Deduction Party Game</span>
+        <span>3–20 Players • 10 Topics</span>
       </footer>
 
-      {/* How To Play Rules Modal */}
+      {/* Rules Modal */}
       {showRules && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-          <div className="relative w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl text-left max-h-[88vh] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white p-6 rounded-3xl border border-slate-200 shadow-xl text-left max-h-[88vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <span>🎭</span> How to Play Imposter
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>🎭</span> How to Play
               </h2>
               <button
                 onClick={() => setShowRules(false)}
                 className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                <span className="font-bold text-slate-900 block mb-1">1. Secret Roles & Cards</span>
-                <span>
-                  Everyone joins the room on their own phone or laptop. Normal players receive the <strong>Secret Word</strong> (e.g. <em>Taylor Swift</em>). Imposters receive <strong>YOU ARE THE IMPOSTER</strong> and have no idea what the word is!
-                </span>
+            <div className="space-y-2.5 text-xs text-slate-600 leading-relaxed">
+              <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-100">
+                <span className="font-bold text-blue-900 block mb-0.5">1. Roles</span>
+                <span>Normal players get the secret word. Imposters have no word and must pretend.</span>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                <span className="font-bold text-slate-900 block mb-1">2. Verbal Discussion</span>
-                <span>
-                  Players talk aloud for 60 seconds. Give clever hints that prove you know the secret word without giving it away to the imposters!
-                </span>
+              <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-100">
+                <span className="font-bold text-blue-900 block mb-0.5">2. Discussion</span>
+                <span>Talk for 5 minutes. Give subtle hints proving you know the secret word.</span>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                <span className="font-bold text-slate-900 block mb-1">3. Secret Voting</span>
-                <span>
-                  Vote privately for who you suspect is an imposter. You cannot vote for yourself.
-                </span>
+              <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-100">
+                <span className="font-bold text-blue-900 block mb-0.5">3. Secret Vote</span>
+                <span>Vote for who you think is the imposter.</span>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                <span className="font-bold text-slate-900 block mb-1">4. Scoring & Leaderboard</span>
-                <span>
-                  • <strong>Normal Players:</strong> +2 points for correctly identifying an imposter.<br />
-                  • <strong>Imposters:</strong> Points = <code>Total Players - Votes Received</code>.
-                </span>
+              <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-100">
+                <span className="font-bold text-blue-900 block mb-0.5">4. Scores</span>
+                <span>Points for catching imposters and escaping undetected.</span>
               </div>
             </div>
 
             <button
               onClick={() => setShowRules(false)}
-              className="mt-6 w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all cursor-pointer"
+              className="mt-5 w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-600/25"
             >
-              Got It, Let's Play!
+              Got It
             </button>
           </div>
         </div>

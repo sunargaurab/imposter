@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeaderNav } from '@/components/common/HeaderNav';
 import { LobbyScreen } from '@/components/screens/LobbyScreen';
@@ -21,6 +21,7 @@ interface GameShellProps {
 
 export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
   const router = useRouter();
+  const normalizedRoomCode = roomCode.trim().toUpperCase();
 
   const [gameState, setGameState] = useState<PublicGameState | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | undefined>(undefined);
@@ -30,66 +31,120 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  // Restore player session credentials
   useEffect(() => {
     const storedToken = localStorage.getItem('imposter_session_token');
     const storedRoom = localStorage.getItem('imposter_room_code');
 
-    if (storedToken && storedRoom === roomCode) {
+    if (storedToken && storedRoom === normalizedRoomCode) {
       setSessionToken(storedToken);
     }
-  }, [roomCode]);
+  }, [normalizedRoomCode]);
 
+  // Fetch authoritative game state & auto-redirect unjoined users
   const fetchGameState = useCallback(async () => {
     try {
-      const res = await fetch(`/api/game/${roomCode}/state`);
+      const res = await fetch(`/api/game/${normalizedRoomCode}/state`, { cache: 'no-store' });
       if (res.ok) {
         const data: PublicGameState = await res.json();
         setGameState(data);
+        setError(null);
 
         const storedPlayerId = localStorage.getItem('imposter_player_id');
-        if (storedPlayerId) {
-          const match = data.players.find(p => p.id === storedPlayerId);
-          if (match) {
-            setCurrentPlayer(match);
+        const storedRoom = localStorage.getItem('imposter_room_code');
+
+        let match: Player | undefined = undefined;
+        if (storedPlayerId && storedRoom === normalizedRoomCode) {
+          match = data.players.find(p => p.id === storedPlayerId);
+        }
+
+        if (match) {
+          setCurrentPlayer(match);
+        } else {
+          // If user has not joined this room yet and it is in LOBBY, auto redirect to join page
+          if (data.game.status === 'LOBBY') {
+            router.replace(`/join/${normalizedRoomCode}`);
+            return;
           }
         }
       } else if (res.status === 404) {
-        setError('Room not found. It may have expired or does not exist.');
+        setError('Room not found. Check code or create a new game.');
       }
     } catch {
       // Fallback
     } finally {
       setLoading(false);
     }
-  }, [roomCode]);
+  }, [normalizedRoomCode, router]);
 
+  // Set up live real-time connection with SSE & Auto-Reconnect
   useEffect(() => {
     fetchGameState();
 
-    const eventSource = new EventSource(`/api/game/${roomCode}/events`);
+    let retryTimeout: NodeJS.Timeout;
 
-    eventSource.onmessage = (event) => {
-      try {
-        const data: PublicGameState = JSON.parse(event.data);
-        setGameState(data);
+    const connectSSE = () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
 
-        const storedPlayerId = localStorage.getItem('imposter_player_id');
-        if (storedPlayerId) {
-          const match = data.players.find(p => p.id === storedPlayerId);
+      const sse = new EventSource(`/api/game/${normalizedRoomCode}/events`);
+      eventSourceRef.current = sse;
+
+      sse.onmessage = (event) => {
+        try {
+          const data: PublicGameState = JSON.parse(event.data);
+          setGameState(data);
+          setError(null);
+
+          const storedPlayerId = localStorage.getItem('imposter_player_id');
+          const storedRoom = localStorage.getItem('imposter_room_code');
+
+          let match: Player | undefined = undefined;
+          if (storedPlayerId && storedRoom === normalizedRoomCode) {
+            match = data.players.find(p => p.id === storedPlayerId);
+          }
+
           if (match) {
             setCurrentPlayer(match);
+          } else if (data.game.status === 'LOBBY') {
+            router.replace(`/join/${normalizedRoomCode}`);
           }
+        } catch {
+          // parse catch
         }
-      } catch {
-        // SSE parse catch
-      }
+      };
+
+      sse.onerror = () => {
+        sse.close();
+        retryTimeout = setTimeout(connectSSE, 1500);
+      };
     };
 
+    connectSSE();
+
+    // Background polling fallback every 2s
+    const pollInterval = setInterval(() => {
+      fetchGameState();
+    }, 2000);
+
+    // Instant refresh on window focus
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchGameState();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchGameState);
+
+    // Heartbeat to keep connection alive
     const heartbeat = setInterval(() => {
       const storedPlayerId = localStorage.getItem('imposter_player_id');
       const token = localStorage.getItem('imposter_session_token');
       if (storedPlayerId && token) {
-        fetch(`/api/game/${roomCode}/action`, {
+        fetch(`/api/game/${normalizedRoomCode}/action`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-session-token': token },
           body: JSON.stringify({ action: 'HEARTBEAT', playerId: storedPlayerId })
@@ -98,11 +153,18 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     }, 5000);
 
     return () => {
-      eventSource.close();
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+      clearTimeout(retryTimeout);
+      clearInterval(pollInterval);
       clearInterval(heartbeat);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchGameState);
     };
-  }, [roomCode, fetchGameState]);
+  }, [normalizedRoomCode, fetchGameState, router]);
 
+  // Fetch secret card if in round
   const fetchSecret = useCallback(async () => {
     const storedPlayerId = localStorage.getItem('imposter_player_id');
     const token = localStorage.getItem('imposter_session_token');
@@ -113,8 +175,9 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     }
 
     try {
-      const res = await fetch(`/api/game/${roomCode}/secret?playerId=${storedPlayerId}`, {
-        headers: { 'x-session-token': token }
+      const res = await fetch(`/api/game/${normalizedRoomCode}/secret?playerId=${storedPlayerId}`, {
+        headers: { 'x-session-token': token },
+        cache: 'no-store'
       });
       if (res.ok) {
         const data = await res.json();
@@ -125,12 +188,13 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     } catch {
       setPlayerSecret(null);
     }
-  }, [roomCode, gameState?.currentRound]);
+  }, [normalizedRoomCode, gameState?.currentRound]);
 
   useEffect(() => {
     fetchSecret();
   }, [fetchSecret, gameState?.game.status, gameState?.game.currentRoundNum]);
 
+  // Dispatch Action Helper
   const handleAction = async (action: string, extraBody: Record<string, unknown> = {}) => {
     const token = localStorage.getItem('imposter_session_token') || sessionToken;
     const storedPlayerId = localStorage.getItem('imposter_player_id') || currentPlayer?.id;
@@ -143,7 +207,7 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     sounds.click();
 
     try {
-      const res = await fetch(`/api/game/${roomCode}/action`, {
+      const res = await fetch(`/api/game/${normalizedRoomCode}/action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,22 +235,22 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-3" />
-        <span className="text-slate-500 font-bold text-xs">Connecting to Room {roomCode}...</span>
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
+        <span className="text-slate-500 font-bold text-xs">Connecting to Room {normalizedRoomCode}...</span>
       </div>
     );
   }
 
   if (error || !gameState) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-4 text-center max-w-sm mx-auto space-y-3">
-        <div className="p-4 rounded-3xl bg-red-50 border border-red-200 text-red-800 w-full">
-          <h2 className="text-base font-bold mb-0.5">Room Unavailable</h2>
-          <p className="text-xs text-red-600">{error || 'This room does not exist or has ended.'}</p>
+      <div className="flex-1 flex flex-col items-center justify-center p-4 text-center max-w-sm mx-auto space-y-3 my-auto">
+        <div className="p-5 rounded-3xl bg-red-50 border border-red-200 text-red-800 w-full">
+          <h2 className="text-base font-bold mb-1">Room Not Found</h2>
+          <p className="text-xs text-red-600">{error || 'This room does not exist or has expired.'}</p>
         </div>
         <button
           onClick={() => router.push('/')}
-          className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all cursor-pointer shadow-xs"
+          className="px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-600/25"
         >
           Return to Home
         </button>
@@ -196,6 +260,29 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
 
   const { game, players, currentRound, roundResult, finalLeaderboard } = gameState;
   const isHost = currentPlayer?.isHost ?? false;
+
+  // If user is not joined and game already started
+  if (!currentPlayer && game.status !== 'LOBBY') {
+    return (
+      <div className="flex-1 flex flex-col justify-between w-full">
+        <HeaderNav game={game} totalPlayers={players.length} />
+        <main className="flex-1 flex flex-col items-center justify-center p-4 text-center max-w-sm mx-auto space-y-4 my-auto">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs w-full space-y-2">
+            <h2 className="text-lg font-black text-slate-900 uppercase">Game in Progress</h2>
+            <p className="text-xs text-slate-500">
+              Room {normalizedRoomCode} is currently in round {game.currentRoundNum}.
+            </p>
+          </div>
+          <button
+            onClick={() => router.push('/')}
+            className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-600/25"
+          >
+            Return to Home
+          </button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col justify-between w-full">
@@ -290,7 +377,7 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
       </main>
 
       <footer className="text-center text-xs text-slate-400 py-3">
-        <span>Room {game.roomCode} • {players.length} Players Connected</span>
+        <span>Room {game.roomCode} • {players.length} Players</span>
       </footer>
     </div>
   );

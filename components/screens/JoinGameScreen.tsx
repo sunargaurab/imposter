@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, LogIn, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { GameLogo } from '@/components/common/GameLogo';
 import { sounds } from '@/lib/audio/soundEffects';
 
@@ -18,14 +18,19 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isPreFilled = Boolean(initialRoomCode);
+
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!roomCode.trim()) {
-      setError('Please enter a 5-character room code.');
+    const cleanCode = roomCode.trim().toUpperCase();
+    const cleanName = playerName.trim();
+
+    if (!cleanCode) {
+      setError('Enter room code.');
       return;
     }
-    if (!playerName.trim()) {
-      setError('Please enter your player name.');
+    if (!cleanName) {
+      setError('Enter your player name.');
       return;
     }
 
@@ -38,15 +43,15 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          roomCode: roomCode.trim().toUpperCase(),
-          playerName: playerName.trim()
+          roomCode: cleanCode,
+          playerName: cleanName
         })
       });
 
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        setError(data.error || 'Failed to join game.');
+        setError(data.error || 'Room not found. Check code and try again.');
         setLoading(false);
         return;
       }
@@ -63,15 +68,15 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 z-10">
-      {/* Top App Bar */}
-      <div className="flex items-center justify-between pb-6">
+    <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 md:p-8 z-10 w-full max-w-md mx-auto">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between pb-6 w-full">
         <button
           onClick={() => {
             sounds.click();
             router.push('/');
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all cursor-pointer"
         >
           <ArrowLeft size={14} />
           <span>Back</span>
@@ -80,15 +85,14 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
         <GameLogo size="sm" />
       </div>
 
-      <form onSubmit={handleJoin} className="space-y-5 my-auto max-w-sm w-full mx-auto pb-8">
+      <form onSubmit={handleJoin} className="space-y-4 my-auto w-full pb-8">
         <div className="text-center">
-          <div className="inline-flex p-3 rounded-2xl bg-blue-50 text-blue-600 mb-2">
-            <LogIn size={24} />
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
-            Join Room
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">
+            {isPreFilled ? 'Join Game' : 'Join Room'}
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">Enter code & choose your nickname</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {isPreFilled ? `Enter your name to join room ${roomCode}` : 'Enter 5-letter code & name'}
+          </p>
         </div>
 
         {error && (
@@ -101,7 +105,7 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
           {/* Room Code */}
           <div className="space-y-1.5">
             <label className="block text-[11px] uppercase font-bold text-slate-500 tracking-wider">
-              Room Code (5 Letters)
+              Room Code
             </label>
             <input
               type="text"
@@ -110,23 +114,24 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
               placeholder="e.g. AB7KQ"
               value={roomCode}
               onChange={e => setRoomCode(e.target.value.toUpperCase())}
-              className="w-full text-center tracking-[0.2em] px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-slate-800 text-slate-900 font-mono font-black text-2xl uppercase focus:outline-none transition-all placeholder-slate-300"
+              className="w-full text-center tracking-[0.25em] px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-900 font-mono font-black text-2xl uppercase focus:outline-none transition-all placeholder-slate-300"
             />
           </div>
 
           {/* Player Name */}
           <div className="space-y-1.5 pt-2 border-t border-slate-100">
             <label className="block text-[11px] uppercase font-bold text-slate-500 tracking-wider">
-              Your Player Name
+              Your Name
             </label>
             <input
               type="text"
               required
+              autoFocus
               maxLength={20}
-              placeholder="e.g. Sam"
+              placeholder="Enter your name"
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
-              className="w-full px-3.5 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-slate-800 text-slate-900 font-bold text-base focus:outline-none transition-all placeholder-slate-400"
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-900 font-bold text-base focus:outline-none transition-all placeholder-slate-400"
             />
           </div>
         </div>
@@ -134,7 +139,7 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-base shadow-md shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
         >
           {loading ? (
             <div className="flex items-center gap-2">
@@ -143,7 +148,7 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({ initialRoomCode 
             </div>
           ) : (
             <>
-              <span>Enter Game</span>
+              <span>Join Game</span>
               <ChevronRight size={18} />
             </>
           )}

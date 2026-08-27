@@ -54,9 +54,7 @@ export const sounds = {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.05);
-    } catch {
-      // Audio context catch
-    }
+    } catch {}
   },
 
   // 3D Card Reveal Whoosh
@@ -125,6 +123,11 @@ export const sounds = {
     } catch {}
   },
 
+  // Alias for timerTick
+  timerTick() {
+    this.tick();
+  },
+
   // Urgent Timer Warning (< 10s)
   urgentTick() {
     if (isMuted) return;
@@ -143,6 +146,29 @@ export const sounds = {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.08);
+    } catch {}
+  },
+
+  // Alarm when discussion timer finishes
+  alarm() {
+    if (isMuted) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      [660, 880].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.15);
+
+        gain.gain.setValueAtTime(0.18, ctx.currentTime + idx * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.15 + 0.3);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.15);
+        osc.stop(ctx.currentTime + idx * 0.15 + 0.3);
+      });
     } catch {}
   },
 
@@ -200,7 +226,7 @@ export const sounds = {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1046.5, ctx.currentTime); // C6
+      osc.frequency.setValueAtTime(1046.5, ctx.currentTime);
 
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);

@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import {
   Game,
   Player,
@@ -11,7 +12,7 @@ import {
   RoundResultSummary,
   FinalPlayerRanking
 } from '@/types/game';
-import { CATEGORIES, getCategoryById, getRandomWord } from '@/data/categories';
+import { getCategoryById, getRandomCategory, getRandomWord } from '@/data/categories';
 import {
   generateRoomCode,
   generatePlayerId,
@@ -38,8 +39,38 @@ interface InternalGameState {
   usedWords: string[];
 }
 
-// In-Memory store for fast, authoritative execution
-const gameStore = new Map<string, InternalGameState>(); // keyed by gameId and roomCode
+// Global Singleton persistence across all Next.js server workers & Fast Refresh
+declare global {
+  // eslint-disable-next-line no-var
+  var __IMPOSTER_GAME_STORE__: Map<string, InternalGameState> | undefined;
+  // eslint-disable-next-line no-var
+  var __IMPOSTER_EVENT_BUS__: EventEmitter | undefined;
+}
+
+if (!globalThis.__IMPOSTER_GAME_STORE__) {
+  globalThis.__IMPOSTER_GAME_STORE__ = new Map<string, InternalGameState>();
+}
+
+if (!globalThis.__IMPOSTER_EVENT_BUS__) {
+  globalThis.__IMPOSTER_EVENT_BUS__ = new EventEmitter();
+  globalThis.__IMPOSTER_EVENT_BUS__.setMaxListeners(1000);
+}
+
+const gameStore: Map<string, InternalGameState> = globalThis.__IMPOSTER_GAME_STORE__;
+export const gameEvents: EventEmitter = globalThis.__IMPOSTER_EVENT_BUS__;
+
+export function broadcastGameUpdate(gameIdOrCode: string) {
+  try {
+    const publicState = getPublicGameState(gameIdOrCode);
+    if (publicState) {
+      const roomUpper = publicState.game.roomCode.trim().toUpperCase();
+      gameEvents.emit(`room:${roomUpper}`, publicState);
+      gameEvents.emit(`game:${publicState.game.id}`, publicState);
+    }
+  } catch {
+    // Ignore broadcast errors
+  }
+}
 
 // Seed initial DEMO game if not existing
 export function seedDemoGame(): InternalGameState {
@@ -49,7 +80,6 @@ export function seedDemoGame(): InternalGameState {
   const gameId = 'gm_demo_1';
   const hostId = 'p_alex';
 
-  const category = getCategoryById('celebrities');
   const secretWord = 'Taylor Swift';
 
   const game: Game = {
@@ -62,7 +92,8 @@ export function seedDemoGame(): InternalGameState {
       imposterCount: 2,
       totalRounds: 5,
       categoryId: 'celebrities',
-      discussionTimeSeconds: 60,
+      categoryIds: ['celebrities'],
+      discussionTimeSeconds: 300,
       normalCorrectVoteScore: 2,
       normalWrongVoteScore: 0
     },
@@ -105,8 +136,9 @@ export function seedDemoGame(): InternalGameState {
 seedDemoGame();
 
 export function findGame(codeOrId: string): InternalGameState | undefined {
+  if (!codeOrId) return undefined;
   const upper = codeOrId.trim().toUpperCase();
-  let state = gameStore.get(upper) || gameStore.get(codeOrId);
+  let state = gameStore.get(upper) || gameStore.get(codeOrId.trim());
   if (!state && upper === 'DEMO1') {
     state = seedDemoGame();
   }
@@ -142,12 +174,17 @@ export function createGame(
     roomCode = generateRoomCode();
   }
 
+  const selectedCategories = (config.categoryIds && config.categoryIds.length > 0)
+    ? config.categoryIds
+    : [config.categoryId || 'celebrities'];
+
   const fullConfig: GameConfig = {
     maxPlayers: config.maxPlayers ?? 6,
     imposterCount: config.imposterCount ?? 2,
     totalRounds: config.totalRounds ?? 5,
-    categoryId: config.categoryId ?? 'celebrities',
-    discussionTimeSeconds: config.discussionTimeSeconds ?? 60,
+    categoryId: selectedCategories[0],
+    categoryIds: selectedCategories,
+    discussionTimeSeconds: config.discussionTimeSeconds ?? 300,
     normalCorrectVoteScore: config.normalCorrectVoteScore ?? 2,
     normalWrongVoteScore: config.normalWrongVoteScore ?? 0,
   };
@@ -192,6 +229,7 @@ export function createGame(
   gameStore.set(gameId, state);
   gameStore.set(roomCode, state);
 
+  broadcastGameUpdate(roomCode);
   return { game, hostPlayer, sessionToken };
 }
 
@@ -237,6 +275,7 @@ export function joinGame(
   state.playerTokens.set(playerId, sessionToken);
   state.game.updatedAt = new Date().toISOString();
 
+  broadcastGameUpdate(state.game.roomCode);
   return { game: state.game, player, sessionToken };
 }
 
@@ -269,12 +308,16 @@ export function startRound(gameId: string, roundNumber = 1): { round: Round; err
     return { round: {} as Round, error: 'At least 3 players are required to start.' };
   }
 
-  const category = getCategoryById(state.game.config.categoryId);
+  const categoryIds = (state.game.config.categoryIds && state.game.config.categoryIds.length > 0)
+    ? state.game.config.categoryIds
+    : [state.game.config.categoryId || 'celebrities'];
+
+  const category = getRandomCategory(categoryIds);
   let secretWord = getRandomWord(category, state.usedWords);
   state.usedWords.push(secretWord);
 
-  // For Demo 1, ensure Round 1 secret word is Taylor Swift if category is celebrities
-  if (state.game.roomCode === 'DEMO1' && roundNumber === 1 && state.game.config.categoryId === 'celebrities') {
+  // For Demo 1, ensure Round 1 secret word is Taylor Swift if celebrities is chosen
+  if (state.game.roomCode === 'DEMO1' && roundNumber === 1 && category.id === 'celebrities') {
     secretWord = 'Taylor Swift';
   }
 
@@ -320,6 +363,7 @@ export function startRound(gameId: string, roundNumber = 1): { round: Round; err
   state.roundPlayers.set(roundId, roundPlayers);
   state.votes.set(roundId, []);
 
+  broadcastGameUpdate(state.game.roomCode);
   return { round };
 }
 
@@ -334,7 +378,7 @@ export function getPlayerSecret(
   // Verify session
   const storedToken = state.playerTokens.get(playerId);
   if (!storedToken || storedToken !== sessionToken) {
-    return null; // Unauthorized access rejected
+    return null;
   }
 
   const currentRound = state.rounds.find(r => r.roundNumber === state.game.currentRoundNum);
@@ -378,7 +422,6 @@ export function submitVote(
   const state = findGame(gameId);
   if (!state) return { success: false, allVoted: false, error: 'Game not found.' };
 
-  // Verify session token
   const storedToken = state.playerTokens.get(voterId);
   if (!storedToken || storedToken !== sessionToken) {
     return { success: false, allVoted: false, error: 'Unauthorized vote attempt.' };
@@ -422,6 +465,7 @@ export function submitVote(
     resolveRoundResults(state, currentRound);
   }
 
+  broadcastGameUpdate(state.game.roomCode);
   return { success: true, allVoted };
 }
 
@@ -433,6 +477,7 @@ export function forceConcludeVoting(gameId: string): boolean {
   if (!currentRound) return false;
 
   resolveRoundResults(state, currentRound);
+  broadcastGameUpdate(state.game.roomCode);
   return true;
 }
 
@@ -451,7 +496,6 @@ function resolveRoundResults(state: InternalGameState, currentRound: Round) {
     state.game.config
   );
 
-  // Apply score updates to players & roundPlayers
   summary.playerResults.forEach(pr => {
     const player = state.players.find(p => p.id === pr.playerId);
     if (player) {
@@ -506,6 +550,7 @@ export function advancePhase(
   state.game.status = nextPhase;
   state.game.updatedAt = new Date().toISOString();
 
+  broadcastGameUpdate(state.game.roomCode);
   return { game: state.game };
 }
 
@@ -522,7 +567,6 @@ export function handlePlayerDisconnect(gameId: string, playerId: string) {
 
   player.connected = false;
 
-  // If host disconnected, transfer host to next connected player
   if (player.isHost) {
     const nextHost = state.players.find(p => p.id !== playerId && p.connected);
     if (nextHost) {
@@ -532,6 +576,7 @@ export function handlePlayerDisconnect(gameId: string, playerId: string) {
     }
   }
   state.game.updatedAt = new Date().toISOString();
+  broadcastGameUpdate(state.game.roomCode);
 }
 
 export function handlePlayerReconnect(gameId: string, playerId: string) {
@@ -543,11 +588,12 @@ export function handlePlayerReconnect(gameId: string, playerId: string) {
     player.connected = true;
     player.lastActiveAt = new Date().toISOString();
     state.game.updatedAt = new Date().toISOString();
+    broadcastGameUpdate(state.game.roomCode);
   }
 }
 
 // -------------------------------------------------------------
-// PUBLIC SANITIZED GAME STATE (DATA ISOLATION)
+// PUBLIC SANITIZED GAME STATE
 // -------------------------------------------------------------
 
 export function getPublicGameState(gameIdOrCode: string): PublicGameState | null {
@@ -580,7 +626,6 @@ export function getPublicGameState(gameIdOrCode: string): PublicGameState | null
       votingStartedAt: currentRound.votingStartedAt,
       totalVotedCount: votesList.length,
       allVoted: votesList.length >= state.players.length,
-      // Secrets exposed ONLY during reveal/scoring
       secretWord: isRevealPhase ? currentRound.secretWord : undefined,
       imposters: isRevealPhase ? roundSummary?.imposters.map(i => i.id) : undefined
     } : undefined,

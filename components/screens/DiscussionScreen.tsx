@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Vote, Sparkles } from 'lucide-react';
+import { MessageSquare, Vote } from 'lucide-react';
 import { Game } from '@/types/game';
-import { getCategoryById } from '@/data/categories';
 import { sounds } from '@/lib/audio/soundEffects';
 
 interface DiscussionScreenProps {
@@ -18,123 +17,115 @@ export const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   onStartVoting,
   isHost = false
 }) => {
-  const duration = game.config.discussionTimeSeconds || 60;
-  const [timeLeft, setTimeLeft] = useState(duration);
-  const category = getCategoryById(game.config.categoryId);
+  const totalDuration = game.config.discussionTimeSeconds || 300; // 5 min default
+  const [timeLeft, setTimeLeft] = useState(totalDuration);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    sounds.timerTick();
+
+    const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          clearInterval(timer);
-          onStartVoting();
+          clearInterval(interval);
+          sounds.alarm();
+          if (isHost) {
+            onStartVoting();
+          }
           return 0;
         }
-
         if (prev <= 10) {
-          sounds.urgentTick();
-        } else if (prev % 10 === 0 || prev <= 15) {
           sounds.tick();
         }
-
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [onStartVoting]);
+    return () => clearInterval(interval);
+  }, [isHost, onStartVoting]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  const progressPercent = ((duration - timeLeft) / duration) * 100;
-  const isUrgent = timeLeft <= 10;
+  const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  const progress = timeLeft / totalDuration;
+  const strokeDashoffset = 440 * (1 - progress);
 
   return (
-    <div className="w-full max-w-sm mx-auto space-y-4 my-auto animate-in zoom-in-95 duration-200">
-      {/* Discussion Main Card */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl text-center border border-slate-200 shadow-xs flex flex-col items-center">
-        {/* Category Chip */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold mb-3">
-          <Sparkles size={13} className="text-slate-500" />
-          <span>Category: {category.name}</span>
-        </div>
-
-        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-1">
-          Discussion
+    <div className="w-full max-w-lg mx-auto space-y-5 my-auto animate-in zoom-in-95 duration-200">
+      {/* Title */}
+      <div className="text-center space-y-1">
+        <span className="text-[11px] uppercase font-bold tracking-widest text-slate-400">
+          Round {game.currentRoundNum} • Discussion
+        </span>
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">
+          Talk & Question
         </h2>
-
-        <p className="text-xs text-slate-500 max-w-xs mx-auto mb-6 font-medium">
-          Speak aloud! Give clues, listen carefully, and look for suspicious hesitation.
+        <p className="text-xs sm:text-sm text-slate-500">
+          Take turns giving subtle hints about the secret word.
         </p>
+      </div>
 
-        {/* Circular Countdown Display */}
-        <div className="relative w-40 h-40 flex items-center justify-center mb-6">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+      {/* Main Timer Display */}
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs flex flex-col items-center justify-center">
+        <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center my-2">
+          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 160 160">
             <circle
-              cx="50"
-              cy="50"
-              r="44"
+              cx="80"
+              cy="80"
+              r="70"
               className="stroke-slate-100"
-              strokeWidth="6"
+              strokeWidth="8"
               fill="transparent"
             />
             <motion.circle
-              cx="50"
-              cy="50"
-              r="44"
-              className={`${isUrgent ? 'stroke-red-600' : 'stroke-slate-900'}`}
-              strokeWidth="6"
-              strokeDasharray="276.46"
-              strokeDashoffset={276.46 - (276.46 * progressPercent) / 100}
-              strokeLinecap="round"
+              cx="80"
+              cy="80"
+              r="70"
+              className="stroke-blue-600"
+              strokeWidth="8"
               fill="transparent"
+              strokeDasharray={440}
+              animate={{ strokeDashoffset }}
               transition={{ duration: 1, ease: 'linear' }}
+              strokeLinecap="round"
             />
           </svg>
 
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className={`font-mono font-black text-4xl tracking-wider ${
-                isUrgent ? 'text-red-600 animate-pulse' : 'text-slate-900'
-              }`}
-            >
+          <div className="absolute flex flex-col items-center justify-center text-center">
+            <span className="font-mono text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
               {formattedTime}
             </span>
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mt-0.5">
-              {isUrgent ? 'Time almost up!' : 'Remaining'}
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+              Time Left
             </span>
           </div>
         </div>
 
-        {/* Tips Box */}
-        <div className="space-y-2 w-full text-left mb-6">
-          <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
-            <span className="text-blue-600 font-bold shrink-0">💡</span>
-            <span>If you know the word, give a clue only real players understand.</span>
-          </div>
-          <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
-            <span className="text-red-600 font-bold shrink-0">🕵️</span>
-            <span>Imposters will give generic, vague, or safe answers.</span>
-          </div>
+        {/* Tip Box */}
+        <div className="w-full mt-4 p-3 rounded-2xl bg-blue-50/60 border border-blue-100 flex items-center gap-2.5 text-xs text-blue-900">
+          <MessageSquare size={16} className="text-blue-600 shrink-0" />
+          <span className="font-medium">
+            Imposters don&apos;t know the secret word. Watch for vague answers!
+          </span>
         </div>
+      </div>
 
-        {/* Action Button */}
+      {/* Host Action or Waiting Info */}
+      <div className="pt-2">
         {isHost ? (
           <button
             onClick={() => {
               sounds.click();
               onStartVoting();
             }}
-            className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-md shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
-            <Vote size={16} />
+            <Vote size={18} />
             <span>Start Voting Now</span>
           </button>
         ) : (
-          <div className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-500 flex items-center justify-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-            <span>Voting starts when timer finishes</span>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-center font-bold text-xs">
+            Voting starts when the timer ends or when the Host starts voting.
           </div>
         )}
       </div>

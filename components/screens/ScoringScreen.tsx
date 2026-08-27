@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, ArrowRight } from 'lucide-react';
 import { Player, Game, RoundResultSummary } from '@/types/game';
 import { PlayerAvatar } from '@/components/common/PlayerAvatar';
@@ -45,8 +44,8 @@ export const ScoringScreen: React.FC<ScoringScreenProps> = ({
       {/* 1. Round Points Earned Cards */}
       <div className="bg-white p-6 rounded-3xl space-y-3.5 border border-slate-200 shadow-xs">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-          <TrendingUp size={14} className="text-slate-600" />
-          <span>Points Earned This Round</span>
+          <TrendingUp size={14} className="text-blue-600" />
+          <span>Points This Round</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -92,7 +91,7 @@ export const ScoringScreen: React.FC<ScoringScreenProps> = ({
       {/* 2. Cumulative Standings Table */}
       <div className="bg-white p-6 rounded-3xl space-y-3.5 border border-slate-200 shadow-xs">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-          <Trophy size={14} className="text-slate-600" />
+          <Trophy size={14} className="text-amber-500" />
           <span>Current Standings</span>
         </h3>
 
@@ -148,7 +147,7 @@ export const ScoringScreen: React.FC<ScoringScreenProps> = ({
             sounds.click();
             onNextRound();
           }}
-          className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-md shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
         >
           {isFinalRound ? (
             <>
