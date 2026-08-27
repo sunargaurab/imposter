@@ -83,7 +83,8 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
   useEffect(() => {
     fetchGameState();
 
-    let retryTimeout: NodeJS.Timeout;
+    let retryTimeout: NodeJS.Timeout | null = null;
+    let sseActive = true;
 
     const connectSSE = () => {
       if (eventSourceRef.current) {
@@ -92,6 +93,10 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
 
       const sse = new EventSource(`/api/game/${normalizedRoomCode}/events`);
       eventSourceRef.current = sse;
+
+      sse.onopen = () => {
+        sseActive = true;
+      };
 
       sse.onmessage = (event) => {
         try {
@@ -118,19 +123,23 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
       };
 
       sse.onerror = () => {
+        sseActive = false;
         sse.close();
-        retryTimeout = setTimeout(connectSSE, 1500);
+        if (retryTimeout) clearTimeout(retryTimeout);
+        retryTimeout = setTimeout(connectSSE, 3000);
       };
     };
 
     connectSSE();
 
-    // Background polling fallback every 2s
-    const pollInterval = setInterval(() => {
-      fetchGameState();
-    }, 2000);
+    // Gentle fallback polling (every 15s) only if SSE gets disconnected
+    const fallbackPoll = setInterval(() => {
+      if (!sseActive) {
+        fetchGameState();
+      }
+    }, 15000);
 
-    // Instant refresh on window focus
+    // Instant refresh on window focus / visibility change
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchGameState();
@@ -139,8 +148,9 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', fetchGameState);
 
-    // Heartbeat to keep connection alive
+    // Low-frequency heartbeat (every 45s) to maintain active player status without spamming
     const heartbeat = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
       const storedPlayerId = localStorage.getItem('imposter_player_id');
       const token = localStorage.getItem('imposter_session_token');
       if (storedPlayerId && token) {
@@ -150,26 +160,29 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
           body: JSON.stringify({ action: 'HEARTBEAT', playerId: storedPlayerId })
         }).catch(() => {});
       }
-    }, 5000);
+    }, 45000);
 
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
-      clearTimeout(retryTimeout);
-      clearInterval(pollInterval);
+      if (retryTimeout) clearTimeout(retryTimeout);
+      clearInterval(fallbackPoll);
       clearInterval(heartbeat);
       window.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', fetchGameState);
     };
   }, [normalizedRoomCode, fetchGameState, router]);
 
-  // Fetch secret card if in round
+  // Fetch secret card when round or session updates
+  const currentRoundNum = gameState?.game.currentRoundNum;
+  const gameStatus = gameState?.game.status;
+
   const fetchSecret = useCallback(async () => {
     const storedPlayerId = localStorage.getItem('imposter_player_id');
-    const token = localStorage.getItem('imposter_session_token');
+    const token = localStorage.getItem('imposter_session_token') || sessionToken;
 
-    if (!storedPlayerId || !token || !gameState?.currentRound) {
+    if (!storedPlayerId || !token || !currentRoundNum || gameStatus === 'LOBBY' || gameStatus === 'FINAL_RESULTS') {
       setPlayerSecret(null);
       return;
     }
@@ -188,11 +201,11 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
     } catch {
       setPlayerSecret(null);
     }
-  }, [normalizedRoomCode, gameState?.currentRound]);
+  }, [normalizedRoomCode, currentRoundNum, gameStatus, sessionToken]);
 
   useEffect(() => {
     fetchSecret();
-  }, [fetchSecret, gameState?.game.status, gameState?.game.currentRoundNum]);
+  }, [fetchSecret]);
 
   // Dispatch Action Helper
   const handleAction = async (action: string, extraBody: Record<string, unknown> = {}) => {
@@ -306,6 +319,7 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
         {game.status === 'ROUND_START' && (
           <RoundStartScreen
             game={game}
+            isHost={isHost}
             onProceed={() => handleAction('ADVANCE_PHASE', { targetPhase: 'SECRET_REVEAL' })}
           />
         )}
@@ -361,6 +375,7 @@ export const GameShell: React.FC<GameShellProps> = ({ roomCode }) => {
         {game.status === 'NEXT_ROUND' && (
           <NextRoundScreen
             game={game}
+            isHost={isHost}
             onProceed={() => handleAction('ADVANCE_PHASE', { targetPhase: 'ROUND_START' })}
           />
         )}

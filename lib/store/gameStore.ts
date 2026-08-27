@@ -585,10 +585,13 @@ export function handlePlayerReconnect(gameId: string, playerId: string) {
 
   const player = state.players.find(p => p.id === playerId);
   if (player) {
+    const wasDisconnected = !player.connected;
     player.connected = true;
     player.lastActiveAt = new Date().toISOString();
-    state.game.updatedAt = new Date().toISOString();
-    broadcastGameUpdate(state.game.roomCode);
+    if (wasDisconnected) {
+      state.game.updatedAt = new Date().toISOString();
+      broadcastGameUpdate(state.game.roomCode);
+    }
   }
 }
 

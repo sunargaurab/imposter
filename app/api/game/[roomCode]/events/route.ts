@@ -39,18 +39,19 @@ export async function GET(
 
   gameEvents.on(`room:${upperCode}`, onGameUpdate);
 
-  // 3. Heartbeat / fallback pulse every 2s
-  const heartbeatId = setInterval(() => {
+  // 3. Lightweight SSE keepalive comment pulse every 20s to prevent proxy timeouts
+  const keepaliveId = setInterval(() => {
     if (isClosed) return;
-    const currentState = getPublicGameState(upperCode);
-    if (currentState) {
-      sendState(currentState);
+    try {
+      writer.write(encoder.encode(`: keepalive\n\n`));
+    } catch {
+      isClosed = true;
     }
-  }, 2000);
+  }, 20000);
 
   req.signal.addEventListener('abort', () => {
     isClosed = true;
-    clearInterval(heartbeatId);
+    clearInterval(keepaliveId);
     gameEvents.off(`room:${upperCode}`, onGameUpdate);
     try {
       writer.close();

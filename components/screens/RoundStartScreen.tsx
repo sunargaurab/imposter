@@ -9,9 +9,10 @@ import { sounds } from '@/lib/audio/soundEffects';
 interface RoundStartScreenProps {
   game: Game;
   onProceed: () => void;
+  isHost?: boolean;
 }
 
-export const RoundStartScreen: React.FC<RoundStartScreenProps> = ({ game, onProceed }) => {
+export const RoundStartScreen: React.FC<RoundStartScreenProps> = ({ game, onProceed, isHost = false }) => {
   const [countdown, setCountdown] = useState(3);
   const category = getCategoryById(game.config.categoryId);
 
@@ -21,7 +22,9 @@ export const RoundStartScreen: React.FC<RoundStartScreenProps> = ({ game, onProc
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          onProceed();
+          if (isHost) {
+            onProceed();
+          }
           return 0;
         }
         sounds.tick();
@@ -30,7 +33,7 @@ export const RoundStartScreen: React.FC<RoundStartScreenProps> = ({ game, onProc
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [onProceed]);
+  }, [isHost, onProceed]);
 
   return (
     <div className="w-full max-w-sm mx-auto text-center space-y-6 my-auto animate-in zoom-in-95 duration-200">
@@ -59,16 +62,20 @@ export const RoundStartScreen: React.FC<RoundStartScreenProps> = ({ game, onProc
           {countdown > 0 ? countdown : 'GO!'}
         </div>
 
-        <button
-          onClick={() => {
-            sounds.click();
-            onProceed();
-          }}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
-        >
-          <span>Skip Countdown</span>
-          <ArrowRight size={13} />
-        </button>
+        {isHost ? (
+          <button
+            onClick={() => {
+              sounds.click();
+              onProceed();
+            }}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+          >
+            <span>Skip Countdown</span>
+            <ArrowRight size={13} />
+          </button>
+        ) : (
+          <span className="text-xs text-slate-400 font-medium">Dealing cards...</span>
+        )}
       </div>
     </div>
   );

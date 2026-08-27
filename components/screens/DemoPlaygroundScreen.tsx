@@ -37,14 +37,17 @@ export const DemoPlaygroundScreen: React.FC = () => {
 
   useEffect(() => {
     fetchGameState();
-    const interval = setInterval(fetchGameState, 1000);
-    return () => clearInterval(interval);
   }, [fetchGameState]);
 
   const activePlayer = gameState?.players[activePlayerIndex];
+  const roundNum = gameState?.game.currentRoundNum;
+  const gameStatus = gameState?.game.status;
 
   const fetchSecret = useCallback(async () => {
-    if (!activePlayer || !gameState) return;
+    if (!activePlayer || !roundNum || gameStatus === 'LOBBY' || gameStatus === 'FINAL_RESULTS') {
+      setPlayerSecret(null);
+      return;
+    }
     try {
       const token = `tok_demo_${activePlayer.name.toLowerCase()}`;
       const res = await fetch(`/api/game/DEMO1/secret?playerId=${activePlayer.id}`, {
@@ -59,11 +62,11 @@ export const DemoPlaygroundScreen: React.FC = () => {
     } catch {
       setPlayerSecret(null);
     }
-  }, [activePlayer, gameState]);
+  }, [activePlayer?.id, activePlayer?.name, roundNum, gameStatus]);
 
   useEffect(() => {
     fetchSecret();
-  }, [fetchSecret, gameState?.game.status, gameState?.game.currentRoundNum]);
+  }, [fetchSecret]);
 
   const handleAction = async (action: string, extraBody: Record<string, unknown> = {}) => {
     if (!activePlayer) return;
